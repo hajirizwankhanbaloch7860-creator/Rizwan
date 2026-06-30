@@ -1,0 +1,6 @@
+{
+  "name": "Al Quran & Hadith",
+  "description": "A comprehensive Islamic companion featuring the Holy Quran (Arabic with translations), word-by-word meanings, audio recitations, authentic Hadith collections, precise prayer times, a Qibla compass, Tasbeeh counter, daily Duas, 99 Names of Allah, and an AI Islamic Assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
