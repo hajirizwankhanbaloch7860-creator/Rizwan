@@ -15,6 +15,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -37,7 +39,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -53,6 +57,14 @@ import com.example.data.database.*
 import com.example.data.model.*
 import com.example.ui.*
 import com.example.utils.IslamicDateTimeUtils
+import com.example.ui.theme.AmiriFontFamily
+import com.example.ui.theme.QuranScheherazadeFontFamily
+import com.example.ui.theme.NotoNastaliqUrduFontFamily
+import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.app.Activity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -158,7 +170,7 @@ fun AuthScreen(onLogin: (String, String) -> Unit) {
                 .widthIn(max = 450.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Elegant Visual Icon Ring
+            // Elegant Visual Icon Ring containing Quran Book Icon
             Box(
                 modifier = Modifier
                     .size(100.dp)
@@ -174,8 +186,8 @@ fun AuthScreen(onLogin: (String, String) -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = "Crescent Moon Star Logo",
+                    imageVector = Icons.Default.MenuBook,
+                    contentDescription = "Quran Book Logo",
                     tint = Color(0xFFC5A059),
                     modifier = Modifier.size(48.dp)
                 )
@@ -184,12 +196,22 @@ fun AuthScreen(onLogin: (String, String) -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "AL QURAN & HADITH",
-                fontSize = 26.sp,
+                text = "القرآن الكريم",
+                fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "AL QURAN",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFC5A059),
                 textAlign = TextAlign.Center,
-                letterSpacing = 2.sp
+                letterSpacing = 4.sp
             )
 
             Text(
@@ -356,59 +378,43 @@ fun AuthScreen(onLogin: (String, String) -> Unit) {
 
 // --- SCREEN 0: DASHBOARD ---
 @Composable
-fun IslamicStar(
+fun IslamicCrescent(
     color: Color,
     modifier: Modifier = Modifier,
-    strokeWidthDp: Float = 2f,
     filled: Boolean = false
 ) {
     Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
         val sizePx = size.minDimension
-        val halfSize = sizePx / 2f
-        val strokeWidthPx = strokeWidthDp.dp.toPx()
-        val side = sizePx * 0.7f
-        val offset = halfSize - (side / 2f)
-
-        if (filled) {
-            drawRect(
-                color = color.copy(alpha = 0.12f),
-                topLeft = Offset(offset, offset),
-                size = androidx.compose.ui.geometry.Size(side, side)
+        
+        // Beautiful crescent path representing the Moon
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(w * 0.45f, h * 0.15f)
+            cubicTo(
+                w * 0.85f, h * 0.2f,
+                w * 0.85f, h * 0.8f,
+                w * 0.45f, h * 0.85f
             )
-            withTransform({
-                rotate(45f)
-            }) {
-                drawRect(
-                    color = color.copy(alpha = 0.12f),
-                    topLeft = Offset(offset, offset),
-                    size = androidx.compose.ui.geometry.Size(side, side)
-                )
-            }
+            cubicTo(
+                w * 0.67f, h * 0.72f,
+                w * 0.67f, h * 0.28f,
+                w * 0.45f, h * 0.15f
+            )
+            close()
         }
-
-        // Draw outer borders
-        drawRect(
-            color = color,
-            topLeft = Offset(offset, offset),
-            size = androidx.compose.ui.geometry.Size(side, side),
-            style = Stroke(width = strokeWidthPx)
-        )
-        withTransform({
-            rotate(45f)
-        }) {
-            drawRect(
-                color = color,
-                topLeft = Offset(offset, offset),
-                size = androidx.compose.ui.geometry.Size(side, side),
-                style = Stroke(width = strokeWidthPx)
+        
+        if (filled) {
+            drawPath(
+                path = path,
+                color = color.copy(alpha = 0.15f)
             )
         }
         
-        // Center ring dot
-        drawCircle(
+        drawPath(
+            path = path,
             color = color,
-            radius = sizePx * 0.12f,
-            style = Stroke(width = strokeWidthPx)
+            style = Stroke(width = 2.dp.toPx())
         )
     }
 }
@@ -559,21 +565,20 @@ fun DashboardScreen(viewModel: IslamicViewModel, onTabSelected: (Int) -> Unit) {
                         }
                     }
 
-                    // Elegant Golden 8-pointed star in the background
+                    // Elegant Golden Crescent Moon in the background
                     Box(
                         modifier = Modifier
                             .weight(0.7f)
                             .height(110.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        IslamicStar(
+                        IslamicCrescent(
                             color = Color(0xFFE5C17B),
                             modifier = Modifier.size(100.dp),
-                            strokeWidthDp = 1.8f,
                             filled = true
                         )
                         
-                        // Icon or Quran written beautifully inside star
+                        // Icon or Quran written beautifully inside crescent
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
                                 imageVector = Icons.Default.MenuBook,
@@ -607,21 +612,21 @@ fun DashboardScreen(viewModel: IslamicViewModel, onTabSelected: (Int) -> Unit) {
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Card 1: Hadith
             Card(
                 onClick = { onTabSelected(2) },
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)),
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
                 modifier = Modifier
                     .weight(1f)
-                    .height(100.dp)
+                    .height(110.dp)
                     .testTag("menu_hadith")
             ) {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(12.dp),
+                    modifier = Modifier.fillMaxSize().padding(14.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Column {
@@ -629,20 +634,20 @@ fun DashboardScreen(viewModel: IslamicViewModel, onTabSelected: (Int) -> Unit) {
                             imageVector = Icons.Default.AutoStories,
                             contentDescription = "Hadith Books",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(30.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Hadith Books",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "الحدیث الشریف",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.tertiary,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -652,15 +657,15 @@ fun DashboardScreen(viewModel: IslamicViewModel, onTabSelected: (Int) -> Unit) {
             Card(
                 onClick = { onTabSelected(3) },
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)),
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
                 modifier = Modifier
                     .weight(1f)
-                    .height(100.dp)
+                    .height(110.dp)
                     .testTag("menu_assistant")
             ) {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(12.dp),
+                    modifier = Modifier.fillMaxSize().padding(14.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Column {
@@ -668,61 +673,116 @@ fun DashboardScreen(viewModel: IslamicViewModel, onTabSelected: (Int) -> Unit) {
                             imageVector = Icons.Default.SupportAgent,
                             contentDescription = "AI Assistant",
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(30.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "AI Assistant",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "روحانی مددگار",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.tertiary,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
+        }
 
-            // Card 3: Islamic Tools
-            Card(
-                onClick = { onTabSelected(4) },
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)),
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Card 3: Full-width Islamic Tools Suite (Premium Upgrade!)
+        Card(
+            onClick = { onTabSelected(4) },
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(24.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("menu_tools")
+        ) {
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(100.dp)
-                    .testTag("menu_tools")
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(12.dp),
-                    contentAlignment = Alignment.CenterStart
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Icon(
-                            imageVector = Icons.Default.Widgets,
-                            contentDescription = "Islamic Tools",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Islamic Tools",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "اسلامی آلات",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            fontWeight = FontWeight.Medium
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Widgets,
+                                    contentDescription = "Islamic Tools Suite",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Islamic Suite & Utilities",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Qibla compass, live streams, dual calendars & custom tasbeeh",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = "Open Tools",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Beautiful scrolling chip list inside card for previewing tools!
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val toolBadges = listOf("🕌 Qibla", "📿 Tasbeeh", "📅 Calendar", "💝 Sadaqah")
+                    toolBadges.forEach { badge ->
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+                        ) {
+                            Text(
+                                text = badge,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = "+ More",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.align(Alignment.CenterVertically).padding(start = 4.dp)
+                    )
                 }
             }
         }
@@ -1018,10 +1078,12 @@ fun DashboardScreen(viewModel: IslamicViewModel, onTabSelected: (Int) -> Unit) {
 fun QuranScreen(viewModel: IslamicViewModel) {
     val selectedSurah by viewModel.selectedSurah.collectAsStateWithLifecycle()
     val ayahList by viewModel.ayahList.collectAsStateWithLifecycle()
+    val isQuranLoading by viewModel.isQuranLoading.collectAsStateWithLifecycle()
     val quranBookmarks by viewModel.quranBookmarks.collectAsStateWithLifecycle()
     val activeReciter by viewModel.activeReciter.collectAsStateWithLifecycle()
     val isAudioPlaying by viewModel.isAudioPlaying.collectAsStateWithLifecycle()
     val currentPlayingAyah by viewModel.currentPlayingAyah.collectAsStateWithLifecycle()
+    val translationRecitationOption by viewModel.translationRecitationOption.collectAsStateWithLifecycle()
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedWordForWbw by remember { mutableStateOf<QuranWord?>(null) }
@@ -1046,6 +1108,13 @@ fun QuranScreen(viewModel: IslamicViewModel) {
 
     if (selectedSurah == null) {
         // --- SURAH LIST VIEW ---
+        var quranListTabSelected by remember { mutableStateOf(0) } // 0 = Surahs, 1 = Juz, 2 = Mushaf / Offline Read
+        var mushafSelectedSurahNum by remember { mutableStateOf(1) } // Default Al-Fatiha
+        var mushafTextSize by remember { mutableStateOf(26f) } // Default 26.sp
+        var mushafShowTranslation by remember { mutableStateOf(false) } // Default false (Arabic only self-reading!)
+        var mushafShowUrdu by remember { mutableStateOf(true) } // Urdu vs English translation
+        var isSurahSelectorOpen by remember { mutableStateOf(false) }
+
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             Text(
                 text = "The Holy Quran",
@@ -1054,91 +1123,586 @@ fun QuranScreen(viewModel: IslamicViewModel) {
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Noble reading with word-by-word Urdu/English translations",
+                text = "Noble reading with word-by-word translations & 30 Juz offline parts",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = { Text("Search Surah by name, number...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("quran_search_bar"),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(filteredSurahList) { surah ->
-                    Card(
-                        onClick = { viewModel.selectSurah(surah) },
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("surah_card_${surah.number}")
+            // Dynamic Resume Reading Banner based on the last bookmark!
+            if (quranBookmarks.isNotEmpty()) {
+                val lastBookmark = quranBookmarks.first()
+                Card(
+                    onClick = {
+                        val surah = viewModel.surahList.firstOrNull { it.number == lastBookmark.surahNumber }
+                        if (surah != null) {
+                            viewModel.selectSurah(surah)
+                        }
+                    },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                // Surah Number circular badge
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = surah.number.toString(),
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(16.dp))
-
-                                Column {
-                                    Text(
-                                        text = surah.nameEnglish,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = "${surah.type} • ${surah.ayahsCount} Verses",
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            Column(horizontalAlignment = Alignment.End) {
+                        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Bookmark,
+                                contentDescription = "Last Bookmarked",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
                                 Text(
-                                    text = surah.nameArabic,
-                                    fontSize = 18.sp,
+                                    text = "پچھلی تلاوت جاری رکھیں",
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = surah.nameTranslation,
+                                    text = "Resume: Surah ${lastBookmark.surahName} • Ayah ${lastBookmark.ayahNumber}",
                                     fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.tertiary
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
+                        Button(
+                            onClick = {
+                                val surah = viewModel.surahList.firstOrNull { it.number == lastBookmark.surahNumber }
+                                if (surah != null) {
+                                    viewModel.selectSurah(surah)
+                                }
+                            },
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            modifier = Modifier.height(34.dp)
+                        ) {
+                            Text("شروع کریں", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            // Beautiful Tab Row for Surahs / Juz / Mushaf
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f), RoundedCornerShape(12.dp))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                listOf("Surahs", "Juz / Parts", "Offline Mushaf").forEachIndexed { index, label ->
+                    val isSelected = quranListTabSelected == index
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .clickable { quranListTabSelected = index }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            when (quranListTabSelected) {
+                0 -> {
+                    // --- TAB 0: SURAHS ---
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search Surah by name, number...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("quran_search_bar"),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(filteredSurahList) { surah ->
+                            Card(
+                                onClick = { viewModel.selectSurah(surah) },
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("surah_card_${surah.number}")
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(CircleShape)
+                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = surah.number.toString(),
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.width(16.dp))
+
+                                        Column {
+                                            Text(
+                                                text = surah.nameEnglish,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = "${surah.type} • ${surah.ayahsCount} Verses",
+                                                fontSize = 12.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            text = surah.nameArabic,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = surah.nameTranslation,
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.tertiary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                1 -> {
+                    // --- TAB 1: JUZ / PARTS ---
+                    val filteredJuzList = viewModel.juzList.filter {
+                        it.nameEnglish.contains(searchQuery, ignoreCase = true) ||
+                        it.nameArabic.contains(searchQuery) ||
+                        it.number.toString().contains(searchQuery)
+                    }
+
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search Juz by name, number...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("juz_search_bar"),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(filteredJuzList) { juz ->
+                            Card(
+                                onClick = { viewModel.selectJuz(juz) },
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("juz_card_${juz.number}")
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(CircleShape)
+                                                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = juz.number.toString(),
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = MaterialTheme.colorScheme.secondary
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.width(16.dp))
+
+                                        Column {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    text = "Juz ${juz.number}",
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = "(${juz.nameEnglish})",
+                                                    fontSize = 13.sp,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                            Text(
+                                                text = "Starts: Surah ${juz.startSurahName} (Ayah ${juz.startAyahNumber})",
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = juz.description,
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.tertiary
+                                            )
+                                        }
+                                    }
+
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            text = juz.nameArabic,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.secondary
+                                        )
+                                        Text(
+                                            text = "پارہ ${juz.number}",
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                2 -> {
+                    // --- TAB 2: OFFLINE MUSHAF ---
+                    val mushafSurah = viewModel.surahList.firstOrNull { it.number == mushafSelectedSurahNum } ?: viewModel.surahList[0]
+                    val mushafAyahs = QuranDataProvider.getAyahsForSurah(mushafSelectedSurahNum)
+
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Top Quick selector controls
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    // Surah selector button
+                                    Button(
+                                        onClick = { isSurahSelectorOpen = true },
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                    ) {
+                                        Icon(Icons.Default.Book, contentDescription = "Select Surah", modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Surah: ${mushafSurah.nameEnglish} (${mushafSurah.number})", fontSize = 12.sp)
+                                    }
+
+                                    // Font size adjustment buttons
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("A-", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.clickable { if (mushafTextSize > 18f) mushafTextSize -= 2f })
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Slider(
+                                            value = mushafTextSize,
+                                            onValueChange = { mushafTextSize = it },
+                                            valueRange = 18f..45f,
+                                            modifier = Modifier.width(80.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("A+", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.clickable { if (mushafTextSize < 45f) mushafTextSize += 2f })
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    // Show translation toggle
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Checkbox(
+                                            checked = mushafShowTranslation,
+                                            onCheckedChange = { mushafShowTranslation = it },
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("ترجمہ دکھائیں (Translation)", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+
+                                    // English / Urdu translation picker
+                                    if (mushafShowTranslation) {
+                                        Row(
+                                            modifier = Modifier
+                                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+                                                .padding(2.dp)
+                                        ) {
+                                            Text(
+                                                text = "Urdu",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (mushafShowUrdu) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                                modifier = Modifier
+                                                    .background(if (mushafShowUrdu) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(6.dp))
+                                                    .clickable { mushafShowUrdu = true }
+                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                            )
+                                            Text(
+                                                text = "English",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (!mushafShowUrdu) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                                modifier = Modifier
+                                                    .background(if (!mushafShowUrdu) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(6.dp))
+                                                    .clickable { mushafShowUrdu = false }
+                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // The Mushaf Pages Book Canvas
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFDFBF7)), // Beautiful authentic ivory color
+                            border = BorderStroke(2.dp, Color(0xFFD4AF37)), // Gold border decoration
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(14.dp)
+                            ) {
+                                // Surah Banner Title inside the book
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFF8B0000).copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                                        .border(BorderStroke(1.dp, Color(0xFFD4AF37)), RoundedCornerShape(8.dp))
+                                        .padding(8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = mushafSurah.nameArabic,
+                                            fontFamily = QuranScheherazadeFontFamily,
+                                            fontSize = 24.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF8B0000)
+                                        )
+                                        Text(
+                                            text = "Surah ${mushafSurah.nameEnglish} • ${mushafSurah.ayahsCount} Verses",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFFD4AF37)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                if (mushafSelectedSurahNum != 1 && mushafSelectedSurahNum != 9) {
+                                    // Prepend Bismillah
+                                    Text(
+                                        text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                                        fontFamily = QuranScheherazadeFontFamily,
+                                        fontSize = (mushafTextSize + 4).sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF1B4D3E),
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                                    )
+                                }
+
+                                LazyColumn(
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    items(mushafAyahs) { ayah ->
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(bottom = 8.dp)
+                                        ) {
+                                            // Arabic text
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                // Bookmark icon for offline bookmarking
+                                                val isBookmarked = quranBookmarks.any { it.surahNumber == mushafSurah.number && it.ayahNumber == ayah.numberInSurah }
+                                                IconButton(
+                                                    onClick = { viewModel.toggleQuranBookmark(mushafSurah, ayah) },
+                                                    modifier = Modifier.size(24.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                                        contentDescription = "Bookmark",
+                                                        tint = if (isBookmarked) Color(0xFFD4AF37) else Color.LightGray,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+
+                                                Spacer(modifier = Modifier.weight(1f))
+
+                                                // Verse Arabic Text
+                                                Text(
+                                                    text = ayah.textArabic,
+                                                    fontFamily = QuranScheherazadeFontFamily,
+                                                    fontSize = mushafTextSize.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF1B4D3E), // Deep emerald green
+                                                    textAlign = TextAlign.Right,
+                                                    modifier = Modifier.weight(9f)
+                                                )
+                                            }
+
+                                            // Verse badge inside Mushaf
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .padding(top = 4.dp)
+                                                        .border(BorderStroke(1.dp, Color(0xFFD4AF37)), CircleShape)
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Verse ${ayah.numberInSurah}",
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFFD4AF37)
+                                                    )
+                                                }
+                                            }
+
+                                            // Translation
+                                            if (mushafShowTranslation) {
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = if (mushafShowUrdu) ayah.textUrdu else ayah.textEnglish,
+                                                    fontFamily = if (mushafShowUrdu) NotoNastaliqUrduFontFamily else FontFamily.Default,
+                                                    fontSize = (mushafTextSize * 0.55).sp,
+                                                    color = Color.DarkGray,
+                                                    textAlign = if (mushafShowUrdu) TextAlign.Right else TextAlign.Left,
+                                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                                                )
+                                            }
+
+                                            Divider(
+                                                color = Color(0xFFD4AF37).copy(alpha = 0.2f),
+                                                thickness = 1.dp,
+                                                modifier = Modifier.padding(top = 12.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Surah selection Dialog
+                    if (isSurahSelectorOpen) {
+                        AlertDialog(
+                            onDismissRequest = { isSurahSelectorOpen = false },
+                            title = { Text("Select Surah to Read", fontWeight = FontWeight.Bold) },
+                            text = {
+                                Column(modifier = Modifier.height(400.dp)) {
+                                    var dialogSearch by remember { mutableStateOf("") }
+                                    OutlinedTextField(
+                                        value = dialogSearch,
+                                        onValueChange = { dialogSearch = it },
+                                        placeholder = { Text("Search Surah...") },
+                                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    val filteredDialogSurahs = viewModel.surahList.filter {
+                                        it.nameEnglish.contains(dialogSearch, ignoreCase = true) ||
+                                        it.number.toString().contains(dialogSearch)
+                                    }
+                                    LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        items(filteredDialogSurahs) { surah ->
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clickable {
+                                                        mushafSelectedSurahNum = surah.number
+                                                        isSurahSelectorOpen = false
+                                                    }
+                                                    .padding(vertical = 10.dp, horizontal = 6.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row {
+                                                    Text("${surah.number}. ", fontWeight = FontWeight.Bold)
+                                                    Text(surah.nameEnglish)
+                                                }
+                                                Text(surah.nameArabic, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { isSurahSelectorOpen = false }) {
+                                    Text("Dismiss")
+                                }
+                            }
+                        )
                     }
                 }
             }
@@ -1161,7 +1725,7 @@ fun QuranScreen(viewModel: IslamicViewModel) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     IconButton(
-                        onClick = { viewModel.selectSurah(activeSurah) }, // Back to Surah list effectively
+                        onClick = { viewModel.clearSelectedSurah() }, // Back to Surah list effectively
                         modifier = Modifier.testTag("quran_back_button")
                     ) {
                         // Quick Reset
@@ -1207,13 +1771,53 @@ fun QuranScreen(viewModel: IslamicViewModel) {
 
             Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
+            val listState = rememberLazyListState()
+
+            // Auto-scroll to currently playing Ayah to center it
+            LaunchedEffect(currentPlayingAyah) {
+                currentPlayingAyah?.let { activeNum ->
+                    val targetIndex = ayahList.indexOfFirst { it.numberInSurah == activeNum }
+                    if (targetIndex >= 0) {
+                        try {
+                            // index 0 is the Bismillah spacer, so we scroll to targetIndex + 1
+                            listState.animateScrollToItem(targetIndex + 1)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
+            }
+
             // Surah Content List
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
+            if (isQuranLoading) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Loading Authentic Verses...",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     // Bismillah Header (except for Surah At-Tawbah)
@@ -1255,20 +1859,13 @@ fun QuranScreen(viewModel: IslamicViewModel) {
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(30.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = ayah.numberInSurah.toString(),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
+                                Text(
+                                    text = "Ayah ${ayah.numberInSurah}",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
 
                                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     // Highlight marker
@@ -1301,34 +1898,53 @@ fun QuranScreen(viewModel: IslamicViewModel) {
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // Interactive Word-by-Word flow
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End,
-                                maxItemsInEachRow = 8
-                            ) {
-                                ayah.words.forEach { word ->
-                                    Box(
+                            // Display full, continuous Arabic text and word-by-word flow starting from the right (RTL)
+                            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    // Full continuous Arabic text of the Ayah
+                                    Text(
+                                        text = ayah.textArabic,
+                                        fontFamily = QuranScheherazadeFontFamily,
+                                        fontSize = 28.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        textAlign = TextAlign.Start, // Since parent is RTL, Start is the right side
                                         modifier = Modifier
-                                            .padding(4.dp)
-                                            .clickable {
-                                                selectedWordForWbw = word
-                                                isWbwSheetOpen = true
-                                            }
-                                            .border(
-                                                width = 1.dp,
-                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                                shape = RoundedCornerShape(8.dp)
-                                            )
-                                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                                            .fillMaxWidth()
+                                            .padding(bottom = 12.dp)
+                                    )
+
+                                    // Interactive Word-by-Word flow
+                                    FlowRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Start, // Start is the right side under RTL
+                                        maxItemsInEachRow = 8
                                     ) {
-                                        Text(
-                                            text = word.arabic,
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            textAlign = TextAlign.Right
-                                        )
+                                        ayah.words.forEach { word ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .padding(4.dp)
+                                                    .clickable {
+                                                        selectedWordForWbw = word
+                                                        isWbwSheetOpen = true
+                                                    }
+                                                    .border(
+                                                        width = 1.dp,
+                                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                                        shape = RoundedCornerShape(8.dp)
+                                                    )
+                                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                                            ) {
+                                                Text(
+                                                    text = word.arabic,
+                                                    fontFamily = QuranScheherazadeFontFamily,
+                                                    fontSize = 22.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1343,15 +1959,22 @@ fun QuranScreen(viewModel: IslamicViewModel) {
                                 modifier = Modifier.padding(vertical = 2.dp)
                             )
 
-                            Text(
-                                text = "Urdu: ${ayah.textUrdu}",
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(vertical = 2.dp)
-                            )
+                            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                                Text(
+                                    text = "Urdu: ${ayah.textUrdu}",
+                                    fontFamily = NotoNastaliqUrduFontFamily,
+                                    fontSize = 17.sp,
+                                    lineHeight = 28.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                )
+                            }
                         }
                     }
                 }
+            }
             }
 
             // Embedded Bottom Media recitation bar
@@ -1402,6 +2025,61 @@ fun QuranScreen(viewModel: IslamicViewModel) {
 
                             IconButton(onClick = { viewModel.playNextAyah() }) {
                                 Icon(Icons.Default.SkipNext, contentDescription = "Next Ayah", tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Voice Translation Companion",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf("None", "English", "Urdu").forEach { opt ->
+                                val label = when (opt) {
+                                    "None" -> "Off"
+                                    "English" -> "English"
+                                    "Urdu" -> "Urdu"
+                                    else -> ""
+                                }
+                                val isSelected = when (opt) {
+                                    "None" -> translationRecitationOption == "None"
+                                    "English" -> translationRecitationOption == "English Translation"
+                                    "Urdu" -> translationRecitationOption == "Urdu Translation"
+                                    else -> false
+                                }
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        val newOpt = when (opt) {
+                                            "None" -> "None"
+                                            "English" -> "English Translation"
+                                            "Urdu" -> "Urdu Translation"
+                                            else -> "None"
+                                        }
+                                        viewModel.setTranslationRecitationOption(newOpt)
+                                    },
+                                    label = { Text(label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    border = null,
+                                    modifier = Modifier.height(28.dp)
+                                )
                             }
                         }
                     }
@@ -1572,6 +2250,8 @@ fun HadithScreen(viewModel: IslamicViewModel) {
     val hadithList by viewModel.filteredHadithList.collectAsStateWithLifecycle()
     val hadithSearchQuery by viewModel.hadithSearchQuery.collectAsStateWithLifecycle()
     val hadithBookmarks by viewModel.hadithBookmarks.collectAsStateWithLifecycle()
+    val currentPlayingHadithNumber by viewModel.currentPlayingHadithNumber.collectAsStateWithLifecycle()
+    val hadithTtsOption by viewModel.hadithTtsOption.collectAsStateWithLifecycle()
 
     if (selectedBook == null) {
         // --- HADITH BOOKS GRID DISPLAY ---
@@ -1699,6 +2379,43 @@ fun HadithScreen(viewModel: IslamicViewModel) {
                             .testTag("hadith_inner_search"),
                         shape = RoundedCornerShape(12.dp)
                     )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Voice Translation Companion",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        listOf("Arabic Only", "Arabic + Urdu", "Arabic + English").forEach { opt ->
+                            val label = when (opt) {
+                                "Arabic Only" -> "Arabic Only"
+                                "Arabic + Urdu" -> "Arabic + Urdu"
+                                "Arabic + English" -> "Arabic + English"
+                                else -> opt
+                            }
+                            val isSelected = hadithTtsOption == opt
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.setHadithTtsOption(opt) },
+                                label = { Text(label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                border = null,
+                                modifier = Modifier.height(28.dp)
+                            )
+                        }
+                    }
                 }
             }
 
@@ -1711,8 +2428,13 @@ fun HadithScreen(viewModel: IslamicViewModel) {
                 items(hadithList) { hadith ->
                     val isBookmarked = hadithBookmarks.any { it.bookName == book.nameEnglish && it.hadithNumber == hadith.number }
 
+                    val isPlaying = currentPlayingHadithNumber == hadith.number
+
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isPlaying) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface
+                        ),
+                        border = if (isPlaying) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1748,13 +2470,27 @@ fun HadithScreen(viewModel: IslamicViewModel) {
                                     )
                                 }
 
-                                IconButton(onClick = { viewModel.toggleHadithBookmark(book, hadith) }) {
-                                    Icon(
-                                        imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                                        contentDescription = "Bookmark",
-                                        tint = if (isBookmarked) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(
+                                        onClick = { viewModel.playHadith(hadith) },
+                                        modifier = Modifier.size(36.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
+                                            contentDescription = if (isPlaying) "Stop Voice" else "Play Hadith and translation voice",
+                                            tint = if (isPlaying) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+
+                                    IconButton(onClick = { viewModel.toggleHadithBookmark(book, hadith) }) {
+                                        Icon(
+                                            imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                                            contentDescription = "Bookmark",
+                                            tint = if (isBookmarked) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             }
 
@@ -1762,7 +2498,8 @@ fun HadithScreen(viewModel: IslamicViewModel) {
 
                             Text(
                                 text = hadith.textArabic,
-                                fontSize = 18.sp,
+                                fontFamily = QuranScheherazadeFontFamily,
+                                fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
                                 textAlign = TextAlign.Right,
@@ -1788,11 +2525,16 @@ fun HadithScreen(viewModel: IslamicViewModel) {
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            Text(
-                                text = "Urdu: ${hadith.textUrdu}",
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                                Text(
+                                    text = "Urdu: ${hadith.textUrdu}",
+                                    fontFamily = NotoNastaliqUrduFontFamily,
+                                    fontSize = 16.sp,
+                                    lineHeight = 26.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
                         }
                     }
                 }
@@ -1808,6 +2550,18 @@ fun AssistantScreen(viewModel: IslamicViewModel) {
     val isAiLoading by viewModel.isAiLoading.collectAsStateWithLifecycle()
 
     var inputPrompt by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrEmpty()) {
+                inputPrompt = spokenText
+            }
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(
@@ -1931,6 +2685,28 @@ fun AssistantScreen(viewModel: IslamicViewModel) {
                     .weight(1f)
                     .testTag("assistant_chat_input"),
                 shape = RoundedCornerShape(12.dp),
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ur-PK")
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "بولیں (Speak now...)")
+                            }
+                            try {
+                                speechRecognizerLauncher.launch(intent)
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Voice input is not supported on this device!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = "Voice Input",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = {
                     if (inputPrompt.isNotEmpty()) {
@@ -1982,7 +2758,9 @@ fun ToolsScreen(viewModel: IslamicViewModel) {
                 Pair("Nearby Mosques", Icons.Default.HomeWork),
                 Pair("Identity & Backup", Icons.Default.CloudSync),
                 Pair("Admin Control", Icons.Default.AdminPanelSettings),
-                Pair("App Installer QR", Icons.Default.QrCode)
+                Pair("App Installer QR", Icons.Default.QrCode),
+                Pair("App Promotion Flyer", Icons.Default.Campaign),
+                Pair("Sadaqah & Donations", Icons.Default.Favorite)
             )
 
             LazyVerticalGrid(
@@ -2046,6 +2824,8 @@ fun ToolsScreen(viewModel: IslamicViewModel) {
                     "Identity & Backup" -> CloudBackupTool(viewModel = viewModel)
                     "Admin Control" -> AdminPanelTool(viewModel = viewModel)
                     "App Installer QR" -> AppInstallerQrTool(viewModel = viewModel)
+                    "App Promotion Flyer" -> AppPromoTool(viewModel = viewModel)
+                    "Sadaqah & Donations" -> DonationTool(viewModel = viewModel)
                 }
             }
         }
@@ -2065,7 +2845,7 @@ fun QiblaCompassTool(viewModel: IslamicViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Orient your device until the needle aligns with the Gold Star", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        Text("Orient your device until the needle aligns with the Gold Marker", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(24.dp))
 
         // Fully Dynamic Animated Compass Dial utilizing overlapping layers and drag-to-simulate interaction
@@ -2097,7 +2877,7 @@ fun QiblaCompassTool(viewModel: IslamicViewModel) {
                         .rotate(qiblaAngle.toFloat()),
                     contentAlignment = Alignment.TopCenter
                 ) {
-                    Icon(Icons.Default.Star, contentDescription = "Kaaba Angle Alignment", tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Place, contentDescription = "Kaaba Angle Alignment", tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(24.dp))
                 }
             }
 
@@ -2341,11 +3121,20 @@ fun SupplicationsTool(viewModel: IslamicViewModel) {
                     Text(dua.title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
                     Text("Category: ${dua.category} • Ref: ${dua.reference}", fontSize = 10.sp, color = MaterialTheme.colorScheme.tertiary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(dua.textArabic, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Right, modifier = Modifier.fillMaxWidth())
+                    Text(dua.textArabic, fontFamily = QuranScheherazadeFontFamily, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Right, modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.height(6.dp))
                     Text("Eng: ${dua.translationEnglish}", fontSize = 12.sp)
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("Urdu: ${dua.translationUrdu}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                        Text(
+                            text = "Urdu: ${dua.translationUrdu}",
+                            fontFamily = NotoNastaliqUrduFontFamily,
+                            fontSize = 15.sp,
+                            lineHeight = 24.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
@@ -2357,6 +3146,11 @@ fun SupplicationsTool(viewModel: IslamicViewModel) {
 @Composable
 fun AlarmsTool(viewModel: IslamicViewModel) {
     val alarms by viewModel.islamicAlarms.collectAsStateWithLifecycle()
+    val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
+    val reminderHour by viewModel.reminderHour.collectAsStateWithLifecycle()
+    val reminderMinute by viewModel.reminderMinute.collectAsStateWithLifecycle()
+    
+    val context = LocalContext.current
 
     var showAddAlarmDialog by remember { mutableStateOf(false) }
     var alarmName by remember { mutableStateOf("") }
@@ -2366,44 +3160,268 @@ fun AlarmsTool(viewModel: IslamicViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        // --- DAILY QURAN & HADITH REMINDER PANEL ---
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+            ),
+            shape = RoundedCornerShape(18.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = "Daily Reminder",
+                            tint = Color(0xFFC5A059),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = "روزانہ کی یاد دہانی",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Daily Quran & Hadith Reminder",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                    Switch(
+                        checked = isReminderEnabled,
+                        onCheckedChange = { 
+                            viewModel.setReminderEnabled(it)
+                            val statusMsg = if (it) "روزانہ کی یاد دہانی فعال ہو گئی!" else "روزانہ کی یاد دہانی غیر فعال ہو گئی!"
+                            Toast.makeText(context, statusMsg, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "ہر روز آپ کو ایک منتخب قرآنی آیت یا مستند حدیث مبارکہ کا اردو اور انگلش ترجمہ کے ساتھ نوٹیفکیشن موصول ہوگا، تاکہ آپ ایپ کھولے بغیر بھی دین سے جڑے رہیں۔",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "نوٹیفکیشن کا وقت (Notification Time):",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Time Presets
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val isMorning = reminderHour == 8 && reminderMinute == 0
+                    val isEvening = reminderHour == 21 && reminderMinute == 0
+                    
+                    Button(
+                        onClick = { 
+                            viewModel.updateReminderTime(8, 0)
+                            Toast.makeText(context, "وقت تبدیل کر کے صبح 8:00 بجے کر دیا گیا ہے!", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isMorning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = if (isMorning) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("🌅 صبح 8:00 بجے", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = { 
+                            viewModel.updateReminderTime(21, 0)
+                            Toast.makeText(context, "وقت تبدیل کر کے رات 9:00 بجے کر دیا گیا ہے!", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isEvening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = if (isEvening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("🌙 رات 9:00 بجے", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Custom Time Input
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = String.format("موجودہ وقت: %02d:%02d %s", 
+                                if (reminderHour % 12 == 0) 12 else reminderHour % 12, 
+                                reminderMinute, 
+                                if (reminderHour >= 12) "PM" else "AM"
+                            ),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("گھنٹہ: ", fontSize = 11.sp)
+                            IconButton(
+                                onClick = { 
+                                    val newHour = if (reminderHour > 0) reminderHour - 1 else 23
+                                    viewModel.updateReminderTime(newHour, reminderMinute)
+                                },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Remove, contentDescription = "Decrease hour", modifier = Modifier.size(16.dp))
+                            }
+                            Text(String.format("%02d", reminderHour), fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+                            IconButton(
+                                onClick = { 
+                                    val newHour = if (reminderHour < 23) reminderHour + 1 else 0
+                                    viewModel.updateReminderTime(newHour, reminderMinute)
+                                },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Increase hour", modifier = Modifier.size(16.dp))
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Text("منٹ: ", fontSize = 11.sp)
+                            IconButton(
+                                onClick = { 
+                                    val newMin = if (reminderMinute >= 5) reminderMinute - 5 else 55
+                                    viewModel.updateReminderTime(reminderHour, newMin)
+                                },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Remove, contentDescription = "Decrease minute", modifier = Modifier.size(16.dp))
+                            }
+                            Text(String.format("%02d", reminderMinute), fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+                            IconButton(
+                                onClick = { 
+                                    val newMin = if (reminderMinute <= 50) reminderMinute + 5 else 0
+                                    viewModel.updateReminderTime(reminderHour, newMin)
+                                },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Increase minute", modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Test Button
+                Button(
+                    onClick = { 
+                        viewModel.triggerTestNotification()
+                        Toast.makeText(context, "ٹیسٹ نوٹیفکیشن بھیج دیا گیا ہے! Test notification sent!", Toast.LENGTH_LONG).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC5A059)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.NotificationsActive, contentDescription = "Test Notification")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("ابھی ٹیسٹ نوٹیفکیشن حاصل کریں", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- CUSTOM ALARMS & PRAYER REMINDERS SECTION ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Active Prayer & Reflection Reminders", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Active Prayer & Custom Alarms", fontWeight = FontWeight.Bold, fontSize = 14.sp)
             Button(onClick = { showAddAlarmDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Add Reminder")
+                Text("Add Alarm")
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(alarms) { alarm ->
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(alarm.label, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text("Trigger Scheduled: ${alarm.timeString} • Type: ${alarm.alarmType}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        IconButton(onClick = { viewModel.deleteIslamicAlarm(alarm.id) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+        if (alarms.isEmpty()) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No custom prayer alarms set yet.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                alarms.forEach { alarm ->
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(alarm.label, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text("Trigger Scheduled: ${alarm.timeString} • Type: ${alarm.alarmType}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            IconButton(onClick = { viewModel.deleteIslamicAlarm(alarm.id) }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                 }
             }
         }
+        
+        Spacer(modifier = Modifier.height(40.dp))
     }
 
     if (showAddAlarmDialog) {
@@ -2791,6 +3809,7 @@ fun QrCodeView(
 @Composable
 fun AppInstallerQrTool(viewModel: IslamicViewModel) {
     val context = LocalContext.current
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     var urlText by remember { mutableStateOf("https://ais-pre-qc2o774rlxwue2lccovmus-601033371983.europe-west2.run.app") }
 
     Column(
@@ -2894,7 +3913,29 @@ fun AppInstallerQrTool(viewModel: IslamicViewModel) {
             singleLine = true
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Button(
+            onClick = {
+                try {
+                    uriHandler.openUri(urlText)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Could not open link: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .testTag("app_install_direct_download_button"),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            Icon(Icons.Default.Download, contentDescription = "Download Direct")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Download APK / Open in Browser", fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Toggle presets
         Row(
@@ -2986,5 +4027,408 @@ fun AppInstallerQrTool(viewModel: IslamicViewModel) {
                 }
             }
         }
+    }
+}
+
+// --- SUB TOOL 12: SADAQAH & DONATIONS ---
+@Composable
+fun DonationTool(viewModel: IslamicViewModel) {
+    val context = LocalContext.current
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+    
+    val accountName by viewModel.donationAccountName.collectAsStateWithLifecycle()
+    val phoneNumber by viewModel.donationPhoneNumber.collectAsStateWithLifecycle()
+    val bankName by viewModel.donationBankName.collectAsStateWithLifecycle()
+    val accountNumber by viewModel.donationAccountNumber.collectAsStateWithLifecycle()
+    val donationLink by viewModel.donationLink.collectAsStateWithLifecycle()
+    
+    var currentSubTab by remember { mutableStateOf(0) } // 0: Donate Mode, 1: Settings Mode
+    
+    var nameInput by remember { mutableStateOf(accountName) }
+    var phoneInput by remember { mutableStateOf(phoneNumber) }
+    var bankInput by remember { mutableStateOf(bankName) }
+    var accountInput by remember { mutableStateOf(accountNumber) }
+    var linkInput by remember { mutableStateOf(donationLink) }
+    
+    // Sync local state when viewmodel updates
+    LaunchedEffect(accountName, phoneNumber, bankName, accountNumber, donationLink) {
+        nameInput = accountName
+        phoneInput = phoneNumber
+        bankInput = bankName
+        accountInput = accountNumber
+        linkInput = donationLink
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        // Urdu / English beautiful sub-tabs
+        TabRow(
+            selectedTabIndex = currentSubTab,
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Tab(
+                selected = currentSubTab == 0,
+                onClick = { currentSubTab = 0 },
+                text = { Text("عطیہ بھیجیں (Donate)", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+            )
+            Tab(
+                selected = currentSubTab == 1,
+                onClick = { currentSubTab = 1 },
+                text = { Text("سیٹنگز (Settings)", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        if (currentSubTab == 0) {
+            // DONATE MODE (عطیہ دہندہ موڈ)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f)),
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Sadaqah",
+                        tint = Color(0xFFC5A059),
+                        modifier = Modifier.size(40.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "صدقہ اور عطیات (Sadaqah & Donations)",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "آپ کا صدقہ ضرورت مندوں کے لیے خوشی اور آسانی کا باعث بنتا ہے۔ برائے مہربانی درج ذیل تفصیلات کے ذریعے اپنا ہدیہ ارسال کریں۔",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            Text(
+                text = "اکاؤنٹ کی تفصیلات (Payment Details):",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            // Render beautiful fields with quick copy
+            val copyData = listOf(
+                Triple("اکاؤنٹ ہولڈر کا نام (Account Title)", accountName, "Account Title"),
+                Triple("بینک کا نام (Bank Name)", bankName, "Bank Name"),
+                Triple("بینک اکاؤنٹ نمبر (Account Number)", accountNumber.ifEmpty { "Not set" }, "Account Number"),
+                Triple("ایزی پیسہ / موبائل نمبر (EasyPaisa / Phone)", phoneNumber.ifEmpty { "Not set" }, "Phone Number")
+            )
+            
+            copyData.forEach { (label, value, clipLabel) ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = label,
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = value,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                        if (value.isNotEmpty() && value != "Not set") {
+                            IconButton(
+                                onClick = {
+                                    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                    val clip = android.content.ClipData.newPlainText(clipLabel, value)
+                                    clipboard.setPrimaryClip(clip)
+                                    Toast.makeText(context, "$clipLabel copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = "Copy $clipLabel",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (donationLink.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        try {
+                            uriHandler.openUri(donationLink)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Invalid link URL format!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC5A059)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Link, contentDescription = "Web Link")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("آن لائن عطیہ کریں (Donate Online Now)", fontWeight = FontWeight.Bold)
+                }
+            }
+            
+        } else {
+            // SETTINGS MODE (معلومات میں ترمیم)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "تفصیلات درج کریں (Configure Details)",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
+                    OutlinedTextField(
+                        value = nameInput,
+                        onValueChange = { nameInput = it },
+                        label = { Text("اکاؤنٹ ہولڈر کا نام (Account Title)") },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        singleLine = true
+                    )
+                    
+                    OutlinedTextField(
+                        value = bankInput,
+                        onValueChange = { bankInput = it },
+                        label = { Text("بینک کا نام (Bank Name)") },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        singleLine = true
+                    )
+                    
+                    OutlinedTextField(
+                        value = accountInput,
+                        onValueChange = { accountInput = it },
+                        label = { Text("بینک اکاؤنٹ نمبر (Account Number)") },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        singleLine = true
+                    )
+                    
+                    OutlinedTextField(
+                        value = phoneInput,
+                        onValueChange = { phoneInput = it },
+                        label = { Text("ایزی پیسہ / جاز کیش نمبر (EasyPaisa/Phone)") },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        singleLine = true
+                    )
+                    
+                    OutlinedTextField(
+                        value = linkInput,
+                        onValueChange = { linkInput = it },
+                        label = { Text("عطیہ کا آن لائن لنک (Donation Link)") },
+                        placeholder = { Text("https://example.com/donate") },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        singleLine = true
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Button(
+                        onClick = {
+                            viewModel.updateDonationDetails(
+                                name = nameInput,
+                                phone = phoneInput,
+                                bank = bankInput,
+                                accNum = accountInput,
+                                link = linkInput
+                            )
+                            Toast.makeText(context, "تفصیلات کامیابی سے محفوظ ہو گئیں! Details Saved!", Toast.LENGTH_LONG).show()
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Save, contentDescription = "Save Details")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("تفصیلات محفوظ کریں (Save Details)", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+fun AppPromoTool(viewModel: IslamicViewModel) {
+    val context = LocalContext.current
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "📢 Premium App Promotion Kit",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "A professionally generated promotional banner showcasing the visual elegance and major capabilities of this modern Islamic companion app.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Large Premium Promo Banner Card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(24.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // Load local drawable banner
+                Image(
+                    painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.img_promo_1782905083810),
+                    contentDescription = "App Promotion Banner",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                )
+
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Al Quran & Hadith Companion",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Visualizing and reciting the words of Allah and His Messenger with pristine dynamic beauty.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+                    )
+
+                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f))
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Key Selling Features Showcase:",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    val bullets = listOf(
+                        "📖 Authentic Quran Reader: Dynamic online streaming of 3 legendary reciters, complete word-by-word breakdowns, bookmarks, highlights, and custom notes.",
+                        "🎙️ Hadith Audio Engine: Complete TTS audio recitation for authentic Bukhari & Muslim Hadiths, with synchronized translation speech in Urdu & English.",
+                        "🕌 Full Islamic Suite: High-precision Qibla Compass, custom Tasbeeh counter, Hijri calendar events, and live Kaaba/Makkah stream.",
+                        "📱 Premium Adaptive UI: Dynamic edge-to-edge screens with gorgeous dark twilight color systems, optimized for both phones and tablets."
+                    )
+
+                    bullets.forEach { bullet ->
+                        Row(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text("•", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = bullet, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Copy Share Text Button
+        Button(
+            onClick = {
+                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val shareText = """
+                    🌟 Al Quran & Hadith - The Ultimate Islamic Companion App! 🌟
+                    
+                    📖 Authentic Quran Reader with dynamic streaming recitations.
+                    🎙️ Hadith Audio recitations with Urdu & English voice translation.
+                    🕌 Full Suite: Qibla Compass, Tasbeeh counter, 99 Names of Allah benefits, Kaaba stream, and much more!
+                    
+                    Download and test now: https://ais-pre-qc2o774rlxwue2lccovmus-601033371983.europe-west2.run.app
+                """.trimIndent()
+                val clip = android.content.ClipData.newPlainText("App Promo Pitch", shareText)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(context, "Promotion message copied to clipboard! Share it with friends and family!", Toast.LENGTH_LONG).show()
+            },
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Share, contentDescription = "Copy Promotion Pitch")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Copy Promotion Pitch & Link", fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }

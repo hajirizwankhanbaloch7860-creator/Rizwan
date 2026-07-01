@@ -89,12 +89,19 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
 
     // --- Quran Reader & Audio States ---
     val surahList: List<Surah> = QuranDataProvider.getSurahList()
+    val juzList: List<Juz> = QuranDataProvider.getJuzList()
 
     private val _selectedSurah = MutableStateFlow<Surah?>(null)
     val selectedSurah: StateFlow<Surah?> = _selectedSurah.asStateFlow()
 
+    private val _selectedJuz = MutableStateFlow<Juz?>(null)
+    val selectedJuz: StateFlow<Juz?> = _selectedJuz.asStateFlow()
+
     private val _ayahList = MutableStateFlow<List<Ayah>>(emptyList())
     val ayahList: StateFlow<List<Ayah>> = _ayahList.asStateFlow()
+
+    private val _isQuranLoading = MutableStateFlow(false)
+    val isQuranLoading: StateFlow<Boolean> = _isQuranLoading.asStateFlow()
 
     private val _currentPlayingAyah = MutableStateFlow<Int?>(null)
     val currentPlayingAyah: StateFlow<Int?> = _currentPlayingAyah.asStateFlow()
@@ -102,46 +109,568 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
     private val _activeReciter = MutableStateFlow("Sheikh Mishary Alafasy")
     val activeReciter: StateFlow<String> = _activeReciter.asStateFlow()
 
+    private val _translationRecitationOption = MutableStateFlow("None") // "None", "English Translation", "Urdu Translation"
+    val translationRecitationOption: StateFlow<String> = _translationRecitationOption.asStateFlow()
+
+    fun setTranslationRecitationOption(option: String) {
+        _translationRecitationOption.value = option
+    }
+
+    private val _currentPlayingHadithNumber = MutableStateFlow<String?>(null)
+    val currentPlayingHadithNumber: StateFlow<String?> = _currentPlayingHadithNumber.asStateFlow()
+
+    private val _hadithTtsOption = MutableStateFlow("Arabic + Urdu") // "Arabic Only", "Arabic + English", "Arabic + Urdu", "English Only", "Urdu Only"
+    val hadithTtsOption: StateFlow<String> = _hadithTtsOption.asStateFlow()
+
+    fun setHadithTtsOption(option: String) {
+        _hadithTtsOption.value = option
+    }
+
+    private var textToSpeech: android.speech.tts.TextToSpeech? = null
+    private var ttsOnDoneCallback: (() -> Unit)? = null
+
     private val _isAudioPlaying = MutableStateFlow(false)
     val isAudioPlaying: StateFlow<Boolean> = _isAudioPlaying.asStateFlow()
 
     val reciters = listOf("Sheikh Mishary Alafasy", "Sheikh Abdul Rahman Al-Sudais", "Sheikh Saad Al-Ghamdi")
 
+    private var mediaPlayer: android.media.MediaPlayer? = null
+    private var lastPlayedSurah: Int? = null
+    private var lastPlayedAyah: Int? = null
+    private var isPlayingBismillahPrepend = false
+    private var bismillahPlayedForSurah: Int? = null
+
+    private val httpClient = okhttp3.OkHttpClient.Builder()
+        .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
+
     fun selectSurah(surah: Surah) {
+        stopAudio()
+        isPlayingBismillahPrepend = false
+        bismillahPlayedForSurah = null
         _selectedSurah.value = surah
-        _ayahList.value = QuranDataProvider.getAyahsForSurah(surah.number)
+        _currentPlayingAyah.value = null
+        _isAudioPlaying.value = false
+
+        val localAyahs = QuranDataProvider.getAyahsForSurah(surah.number)
+        if (surah.number in listOf(1, 103, 108, 112, 113, 114)) {
+            _ayahList.value = localAyahs
+        } else {
+            // Load local placeholder first (which is beautiful and has 3 verses), then load dynamically
+            _ayahList.value = localAyahs
+            loadSurahDynamically(surah.number)
+        }
+    }
+
+    private fun loadSurahDynamically(surahNumber: Int) {
+        _isQuranLoading.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            val url = "https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,en.sahih,ur.jalandhry"
+            val request = okhttp3.Request.Builder().url(url).build()
+            try {
+                httpClient.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val body = response.body?.string()
+                        if (body != null) {
+                            val parsedAyahs = parseAlQuranApiResponse(body)
+                            if (parsedAyahs.isNotEmpty()) {
+                                _ayahList.value = parsedAyahs
+                                _isQuranLoading.value = false
+                                return@launch
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            // Fallback 1: Try to fetch using Gemini API!
+            try {
+                val geminiAyahs = fetchAyahsFromGemini(surahNumber)
+                if (geminiAyahs.isNotEmpty()) {
+                    _ayahList.value = geminiAyahs
+                    _isQuranLoading.value = false
+                    return@launch
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            // Fallback 2: Keep the local placeholder but dynamically adjust its Ayah count and numbers to match the Surah!
+            val totalAyahsCount = surahList.firstOrNull { it.number == surahNumber }?.ayahsCount ?: 7
+            val fallbackList = mutableListOf<Ayah>()
+            for (i in 1..totalAyahsCount) {
+                fallbackList.add(
+                    Ayah(
+                        i,
+                        "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ (Ayah $i placeholder)",
+                        "Praise be to Allah, Lord of the worlds. (Ayah $i Translation)",
+                        "سب تعریفیں اللہ کے لیے ہیں جو سب جہانوں کا پالنے والا ہے۔ (آیت $i کا ترجمہ)",
+                        listOf(
+                            QuranWord("الْحَمْدُ", "All praise", "سب تعریفیں", "Al-Hamdu"),
+                            QuranWord("لِلَّهِ", "to Allah", "اللہ کے لیے", "Lillahi")
+                        )
+                    )
+                )
+            }
+            _ayahList.value = fallbackList
+            _isQuranLoading.value = false
+        }
+    }
+
+    private fun parseAlQuranApiResponse(jsonStr: String): List<Ayah> {
+        val list = mutableListOf<Ayah>()
+        try {
+            val root = org.json.JSONObject(jsonStr)
+            val dataArray = root.getJSONArray("data")
+            if (dataArray.length() >= 3) {
+                val uthmaniEdition = dataArray.getJSONObject(0)
+                val englishEdition = dataArray.getJSONObject(1)
+                val urduEdition = dataArray.getJSONObject(2)
+
+                val uthmaniAyahs = uthmaniEdition.getJSONArray("ayahs")
+                val englishAyahs = englishEdition.getJSONArray("ayahs")
+                val urduAyahs = urduEdition.getJSONArray("ayahs")
+
+                val length = uthmaniAyahs.length()
+                for (i in 0 until length) {
+                    val uthmaniObj = uthmaniAyahs.getJSONObject(i)
+                    val englishObj = englishAyahs.getJSONObject(i)
+                    val urduObj = urduAyahs.getJSONObject(i)
+
+                    val num = uthmaniObj.getInt("numberInSurah")
+                    val arabicText = uthmaniObj.getString("text")
+                    val englishText = englishObj.getString("text")
+                    val urduText = urduObj.getString("text")
+
+                    val wordsList = mutableListOf<QuranWord>()
+                    val arabicWords = arabicText.split(" ")
+                    for (w in arabicWords) {
+                        if (w.trim().isNotEmpty()) {
+                            wordsList.add(QuranWord(w, "Word", "لفظ", "Word"))
+                        }
+                    }
+
+                    list.add(
+                        Ayah(
+                            numberInSurah = num,
+                            textArabic = arabicText,
+                            textEnglish = englishText,
+                            textUrdu = urduText,
+                            words = wordsList
+                        )
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return list
+    }
+
+    private suspend fun fetchAyahsFromGemini(surahNumber: Int): List<Ayah> {
+        val surah = surahList.firstOrNull { it.number == surahNumber } ?: return emptyList()
+        val prompt = """
+            Provide the first 5 verses of Surah ${surah.nameEnglish} (Surah number $surahNumber) in JSON format.
+            Format response as a JSON array of objects. Each object must have:
+            - "numberInSurah": integer
+            - "textArabic": string (clean Arabic text)
+            - "textEnglish": string (English translation)
+            - "textUrdu": string (Urdu translation)
+            
+            Do not include any explanation or markdown formatting, just return raw valid JSON array.
+        """.trimIndent()
+        
+        val response = GeminiClient.askAssistant(prompt)
+        val cleanJson = response.replace("```json", "").replace("```", "").trim()
+        val list = mutableListOf<Ayah>()
+        try {
+            val jsonArray = org.json.JSONArray(cleanJson)
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val num = obj.getInt("numberInSurah")
+                val arabic = obj.getString("textArabic")
+                val english = obj.getString("textEnglish")
+                val urdu = obj.getString("textUrdu")
+                
+                val wordsList = mutableListOf<QuranWord>()
+                val arabicWords = arabic.split(" ")
+                for (w in arabicWords) {
+                    if (w.trim().isNotEmpty()) {
+                        wordsList.add(QuranWord(w, "Word", "لفظ", "Word"))
+                    }
+                }
+                
+                list.add(Ayah(num, arabic, english, urdu, wordsList))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return list
+    }
+
+    fun clearSelectedSurah() {
+        stopAudio()
+        _selectedSurah.value = null
         _currentPlayingAyah.value = null
         _isAudioPlaying.value = false
     }
 
+    fun selectJuz(juz: Juz) {
+        _selectedJuz.value = juz
+        val surah = surahList.firstOrNull { it.number == juz.startSurahNumber }
+        if (surah != null) {
+            selectSurah(surah)
+            _currentPlayingAyah.value = juz.startAyahNumber
+        }
+    }
+
+    fun clearSelectedJuz() {
+        _selectedJuz.value = null
+        clearSelectedSurah()
+    }
+
     fun selectReciter(reciter: String) {
         _activeReciter.value = reciter
+        if (_isAudioPlaying.value) {
+            val surah = _selectedSurah.value
+            val current = _currentPlayingAyah.value ?: 1
+            if (surah != null) {
+                playAyahAudio(surah.number, current)
+            }
+        }
     }
 
     fun toggleAudioPlay() {
         if (_ayahList.value.isNotEmpty()) {
-            _isAudioPlaying.value = !_isAudioPlaying.value
-            if (_isAudioPlaying.value && _currentPlayingAyah.value == null) {
-                _currentPlayingAyah.value = 1
+            val newState = !_isAudioPlaying.value
+            _isAudioPlaying.value = newState
+            if (newState) {
+                val surah = _selectedSurah.value
+                val current = _currentPlayingAyah.value ?: 1
+                if (_currentPlayingAyah.value == null) {
+                    _currentPlayingAyah.value = 1
+                }
+                if (surah != null) {
+                    playAyahAudio(surah.number, current)
+                }
+            } else {
+                pauseAudio()
             }
         }
     }
 
     fun playNextAyah() {
         val current = _currentPlayingAyah.value ?: return
-        if (current < _ayahList.value.size) {
-            _currentPlayingAyah.value = current + 1
-        } else {
-            _currentPlayingAyah.value = 1 // loop back
+        val next = if (current < _ayahList.value.size) current + 1 else 1
+        _currentPlayingAyah.value = next
+        val surah = _selectedSurah.value
+        if (surah != null && _isAudioPlaying.value) {
+            playAyahAudio(surah.number, next)
         }
     }
 
     fun playPreviousAyah() {
         val current = _currentPlayingAyah.value ?: return
-        if (current > 1) {
-            _currentPlayingAyah.value = current - 1
+        val prev = if (current > 1) current - 1 else _ayahList.value.size
+        _currentPlayingAyah.value = prev
+        val surah = _selectedSurah.value
+        if (surah != null && _isAudioPlaying.value) {
+            playAyahAudio(surah.number, prev)
+        }
+    }
+
+    private fun playAyahAudio(surahNumber: Int, ayahNumber: Int) {
+        if (lastPlayedSurah == surahNumber && lastPlayedAyah == ayahNumber && mediaPlayer != null) {
+            try {
+                mediaPlayer?.let {
+                    if (!it.isPlaying) {
+                        it.start()
+                    }
+                    return
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                stopAudio()
+            }
+        }
+
+        stopAudio()
+        
+        val folder = when (_activeReciter.value) {
+            "Sheikh Mishary Alafasy" -> "Alafasy_128kbps"
+            "Sheikh Abdul Rahman Al-Sudais" -> "Abdurrahmaan_As-Sudais_192kbps"
+            "Sheikh Saad Al-Ghamdi" -> "Ghamadi_40kbps"
+            else -> "Alafasy_128kbps"
+        }
+
+        val isPrepend = ayahNumber == 1 && surahNumber != 1 && surahNumber != 9 && bismillahPlayedForSurah != surahNumber && !isPlayingBismillahPrepend
+
+        val surahStr = if (isPrepend) "001" else String.format("%03d", surahNumber)
+        val ayahStr = if (isPrepend) "001" else String.format("%03d", ayahNumber)
+        val audioUrl = "https://everyayah.com/data/$folder/$surahStr$ayahStr.mp3"
+
+        if (isPrepend) {
+            isPlayingBismillahPrepend = true
+        }
+
+        try {
+            val player = android.media.MediaPlayer().apply {
+                setAudioAttributes(
+                    android.media.AudioAttributes.Builder()
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                        .build()
+                )
+                setDataSource(audioUrl)
+                setOnPreparedListener { mp ->
+                    if (_isAudioPlaying.value) {
+                        mp.start()
+                        if (!isPrepend) {
+                            lastPlayedSurah = surahNumber
+                            lastPlayedAyah = ayahNumber
+                        }
+                    }
+                }
+                setOnCompletionListener {
+                    if (isPlayingBismillahPrepend) {
+                        isPlayingBismillahPrepend = false
+                        bismillahPlayedForSurah = surahNumber
+                        playAyahAudio(surahNumber, 1)
+                    } else {
+                        val currentOption = _translationRecitationOption.value
+                        if (currentOption != "None") {
+                            val currentAyah = _ayahList.value.firstOrNull { it.numberInSurah == ayahNumber }
+                            if (currentAyah != null) {
+                                val textToSpeak = if (currentOption == "Urdu Translation") {
+                                    currentAyah.textUrdu
+                                } else {
+                                    currentAyah.textEnglish
+                                }
+                                speakTranslation(textToSpeak) {
+                                    playNextAyahAuto()
+                                }
+                            } else {
+                                playNextAyahAuto()
+                            }
+                        } else {
+                            playNextAyahAuto()
+                        }
+                    }
+                }
+                setOnErrorListener { _, _, _ ->
+                    if (folder != "Alafasy_128kbps") {
+                        _activeReciter.value = "Sheikh Mishary Alafasy"
+                        playAyahAudio(surahNumber, ayahNumber)
+                    }
+                    true
+                }
+                prepareAsync()
+            }
+            mediaPlayer = player
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun speakTranslation(text: String, onDone: () -> Unit) {
+        val tts = textToSpeech
+        if (tts == null) {
+            onDone()
+            return
+        }
+
+        ttsOnDoneCallback = onDone
+
+        val currentOption = _translationRecitationOption.value
+        val locale = if (currentOption == "Urdu Translation") {
+            java.util.Locale("ur", "PK")
         } else {
-            _currentPlayingAyah.value = _ayahList.value.size
+            java.util.Locale.US
+        }
+
+        try {
+            tts.language = locale
+            val params = android.os.Bundle().apply {
+                putString(android.speech.tts.TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "translation_tts")
+            }
+            tts.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) {}
+
+                override fun onDone(utteranceId: String?) {
+                    if (utteranceId == "translation_tts") {
+                        ttsOnDoneCallback?.let { callback ->
+                            viewModelScope.launch {
+                                callback.invoke()
+                            }
+                        }
+                        ttsOnDoneCallback = null
+                    }
+                }
+
+                @Deprecated("Deprecated in Java")
+                override fun onError(utteranceId: String?) {
+                    ttsOnDoneCallback?.let { callback ->
+                        viewModelScope.launch {
+                            callback.invoke()
+                        }
+                    }
+                    ttsOnDoneCallback = null
+                }
+            })
+            tts.speak(text, android.speech.tts.TextToSpeech.QUEUE_FLUSH, params, "translation_tts")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onDone()
+        }
+    }
+
+    private fun playNextAyahAuto() {
+        val current = _currentPlayingAyah.value ?: return
+        if (current < _ayahList.value.size) {
+            val next = current + 1
+            _currentPlayingAyah.value = next
+            val surah = _selectedSurah.value
+            if (surah != null && _isAudioPlaying.value) {
+                playAyahAudio(surah.number, next)
+            }
+        } else {
+            _isAudioPlaying.value = false
+            _currentPlayingAyah.value = null
+            stopAudio()
+            isPlayingBismillahPrepend = false
+            bismillahPlayedForSurah = null
+        }
+    }
+
+    private fun pauseAudio() {
+        try {
+            textToSpeech?.stop()
+            ttsOnDoneCallback = null
+            mediaPlayer?.let {
+                if (it.isPlaying) {
+                    it.pause()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun stopAudio() {
+        try {
+            textToSpeech?.stop()
+            ttsOnDoneCallback = null
+            _currentPlayingHadithNumber.value = null
+            mediaPlayer?.let {
+                it.release()
+            }
+            mediaPlayer = null
+            lastPlayedSurah = null
+            lastPlayedAyah = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun playHadith(hadith: Hadith) {
+        if (_currentPlayingHadithNumber.value == hadith.number) {
+            stopHadithAudio()
+            return
+        }
+
+        stopAudio() // Stop Quran audio if playing
+        stopHadithAudio() // Reset TTS
+
+        _currentPlayingHadithNumber.value = hadith.number
+
+        val tts = textToSpeech
+        if (tts == null) {
+            _currentPlayingHadithNumber.value = null
+            return
+        }
+
+        val option = _hadithTtsOption.value
+
+        viewModelScope.launch {
+            try {
+                if (option == "Arabic Only" || option == "Arabic + English" || option == "Arabic + Urdu") {
+                    // Speak Arabic first
+                    speakHadithText(hadith.textArabic, java.util.Locale("ar")) {
+                        // After Arabic is done, speak translation if needed
+                        if (option == "Arabic + English") {
+                            speakHadithText(hadith.textEnglish, java.util.Locale.US) {
+                                _currentPlayingHadithNumber.value = null
+                            }
+                        } else if (option == "Arabic + Urdu") {
+                            speakHadithText(hadith.textUrdu, java.util.Locale("ur", "PK")) {
+                                _currentPlayingHadithNumber.value = null
+                            }
+                        } else {
+                            _currentPlayingHadithNumber.value = null
+                        }
+                    }
+                } else if (option == "English Only") {
+                    speakHadithText(hadith.textEnglish, java.util.Locale.US) {
+                        _currentPlayingHadithNumber.value = null
+                    }
+                } else if (option == "Urdu Only") {
+                    speakHadithText(hadith.textUrdu, java.util.Locale("ur", "PK")) {
+                        _currentPlayingHadithNumber.value = null
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _currentPlayingHadithNumber.value = null
+            }
+        }
+    }
+
+    private fun speakHadithText(text: String, locale: java.util.Locale, onDone: () -> Unit) {
+        val tts = textToSpeech ?: return
+        ttsOnDoneCallback = onDone
+        try {
+            tts.language = locale
+            val params = android.os.Bundle().apply {
+                putString(android.speech.tts.TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "hadith_tts")
+            }
+            tts.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) {}
+                override fun onDone(utteranceId: String?) {
+                    if (utteranceId == "hadith_tts") {
+                        ttsOnDoneCallback?.let { callback ->
+                            viewModelScope.launch {
+                                callback.invoke()
+                            }
+                        }
+                        ttsOnDoneCallback = null
+                    }
+                }
+                override fun onError(utteranceId: String?) {
+                    ttsOnDoneCallback?.let { callback ->
+                        viewModelScope.launch {
+                            callback.invoke()
+                        }
+                    }
+                    ttsOnDoneCallback = null
+                }
+            })
+            tts.speak(text, android.speech.tts.TextToSpeech.QUEUE_FLUSH, params, "hadith_tts")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onDone()
+        }
+    }
+
+    fun stopHadithAudio() {
+        try {
+            textToSpeech?.stop()
+            ttsOnDoneCallback = null
+            _currentPlayingHadithNumber.value = null
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -413,6 +942,16 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
     }
 
     init {
+        try {
+            textToSpeech = android.speech.tts.TextToSpeech(application) { status ->
+                if (status == android.speech.tts.TextToSpeech.SUCCESS) {
+                    // TTS initialized
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         // Run a clock simulation for Makkah Live Time and Viewership Flux
         viewModelScope.launch {
             while (true) {
@@ -457,6 +996,95 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
             _adminSystemLogs.value = logs
             _adminNotificationText.value = ""
         }
+    }
+
+    // --- Donation & Sadaqah SharedPreferences Persistent States ---
+    private val prefs = application.getSharedPreferences("islamic_donation_prefs", android.content.Context.MODE_PRIVATE)
+
+    private val _donationAccountName = MutableStateFlow(prefs.getString("acc_name", "Haji Rizwan Khan Baloch") ?: "Haji Rizwan Khan Baloch")
+    val donationAccountName: StateFlow<String> = _donationAccountName.asStateFlow()
+
+    private val _donationPhoneNumber = MutableStateFlow(prefs.getString("phone_num", "+923260148196") ?: "+923260148196")
+    val donationPhoneNumber: StateFlow<String> = _donationPhoneNumber.asStateFlow()
+
+    private val _donationBankName = MutableStateFlow(prefs.getString("bank_name", "JazzCash") ?: "JazzCash")
+    val donationBankName: StateFlow<String> = _donationBankName.asStateFlow()
+
+    private val _donationAccountNumber = MutableStateFlow(prefs.getString("acc_num", "+923260148196") ?: "+923260148196")
+    val donationAccountNumber: StateFlow<String> = _donationAccountNumber.asStateFlow()
+
+    private val _donationLink = MutableStateFlow(prefs.getString("donate_link", "") ?: "")
+    val donationLink: StateFlow<String> = _donationLink.asStateFlow()
+
+    fun updateDonationDetails(name: String, phone: String, bank: String, accNum: String, link: String) {
+        prefs.edit().apply {
+            putString("acc_name", name)
+            putString("phone_num", phone)
+            putString("bank_name", bank)
+            putString("acc_num", accNum)
+            putString("donate_link", link)
+            apply()
+        }
+        _donationAccountName.value = name
+        _donationPhoneNumber.value = phone
+        _donationBankName.value = bank
+        _donationAccountNumber.value = accNum
+        _donationLink.value = link
+    }
+
+    // --- Daily Quran & Hadith Reminder Preference States ---
+    private val notifPrefs = application.getSharedPreferences("islamic_notification_settings", android.content.Context.MODE_PRIVATE)
+
+    private val _isReminderEnabled = MutableStateFlow(notifPrefs.getBoolean("enabled", true))
+    val isReminderEnabled: StateFlow<Boolean> = _isReminderEnabled.asStateFlow()
+
+    private val _reminderHour = MutableStateFlow(notifPrefs.getInt("hour", 8))
+    val reminderHour: StateFlow<Int> = _reminderHour.asStateFlow()
+
+    private val _reminderMinute = MutableStateFlow(notifPrefs.getInt("minute", 0))
+    val reminderMinute: StateFlow<Int> = _reminderMinute.asStateFlow()
+
+    fun setReminderEnabled(enabled: Boolean) {
+        _isReminderEnabled.value = enabled
+        if (enabled) {
+            com.example.utils.IslamicNotificationHelper.scheduleDailyReminder(
+                getApplication(),
+                _reminderHour.value,
+                _reminderMinute.value
+            )
+        } else {
+            com.example.utils.IslamicNotificationHelper.cancelDailyReminder(getApplication())
+        }
+    }
+
+    fun updateReminderTime(hour: Int, minute: Int) {
+        _reminderHour.value = hour
+        _reminderMinute.value = minute
+        if (_isReminderEnabled.value) {
+            com.example.utils.IslamicNotificationHelper.scheduleDailyReminder(
+                getApplication(),
+                hour,
+                minute
+            )
+        }
+    }
+
+    fun triggerTestNotification() {
+        val randomIndex = kotlin.random.Random.nextInt(com.example.utils.IslamicNotificationHelper.reminders.size)
+        val reminder = com.example.utils.IslamicNotificationHelper.reminders[randomIndex]
+        com.example.utils.IslamicNotificationHelper.showNotification(getApplication(), reminder)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        try {
+            textToSpeech?.stop()
+            textToSpeech?.shutdown()
+            textToSpeech = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        stopAudio()
     }
 }
 

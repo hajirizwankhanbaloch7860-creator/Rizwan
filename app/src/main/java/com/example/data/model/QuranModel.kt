@@ -78,3 +78,14 @@ data class Mosque(
     val latitude: Double,
     val longitude: Double
 )
+
+data class Juz(
+    val number: Int,
+    val nameArabic: String,
+    val nameEnglish: String,
+    val startSurahNumber: Int,
+    val startSurahName: String,
+    val startAyahNumber: Int,
+    val description: String
+)
+

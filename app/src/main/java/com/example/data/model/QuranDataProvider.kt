@@ -123,6 +123,41 @@ object QuranDataProvider {
         return list
     }
 
+    fun getJuzList(): List<Juz> {
+        return listOf(
+            Juz(1, "آلم", "Alif Lam Meem", 1, "Al-Fatiha", 1, "Contains Al-Fatiha and Al-Baqarah (verse 1 to 141)"),
+            Juz(2, "سيقول", "Sayaqool", 2, "Al-Baqarah", 142, "Al-Baqarah (verse 142 to 252)"),
+            Juz(3, "تلك الرسل", "Tilkal Rusul", 2, "Al-Baqarah", 253, "Al-Baqarah (verse 253) to Ali 'Imran (verse 92)"),
+            Juz(4, "لن تنالوا", "Lan Tanaloo", 3, "Ali 'Imran", 93, "Ali 'Imran (verse 93) to An-Nisa (verse 23)"),
+            Juz(5, "والمحصنات", "Wal Muhsanat", 4, "An-Nisa", 24, "An-Nisa (verse 24 to 147)"),
+            Juz(6, "لا يحب الله", "La Yuhibbullah", 4, "An-Nisa", 148, "An-Nisa (verse 148) to Al-Ma'idah (verse 81)"),
+            Juz(7, "وإذا سمعوا", "Wa Iza Sami'oo", 5, "Al-Ma'idah", 82, "Al-Ma'idah (verse 82) to Al-An'am (verse 110)"),
+            Juz(8, "ولو أننا", "Wa Lau Annana", 6, "Al-An'am", 111, "Al-An'am (verse 111) to Al-A'raf (verse 87)"),
+            Juz(9, "قال الملأ", "Qal Al-Mala'u", 7, "Al-A'raf", 88, "Al-A'raf (verse 88) to Al-Anfal (verse 40)"),
+            Juz(10, "واعلموا", "Wa'lamoo", 8, "Al-Anfal", 41, "Al-Anfal (verse 41) to At-Tawbah (verse 92)"),
+            Juz(11, "يعتذرون", "Ya'taziroon", 9, "At-Tawbah", 93, "At-Tawbah (verse 93) to Hud (verse 5)"),
+            Juz(12, "وما من دابة", "Wa Mamin Da'abbatin", 11, "Hud", 6, "Hud (verse 6) to Yusuf (verse 52)"),
+            Juz(13, "وما أبرئ", "Wa Ma Ubri'oo", 12, "Yusuf", 53, "Yusuf (verse 53) to Ibrahim (verse 52)"),
+            Juz(14, "ربما", "Rubama", 15, "Al-Hijr", 1, "Al-Hijr (verse 1) to An-Nahl (verse 128)"),
+            Juz(15, "سبحان الذي", "Subhanallazi", 17, "Al-Isra", 1, "Al-Isra (verse 1) to Al-Kahf (verse 74)"),
+            Juz(16, "قال ألم", "Qal Alam", 18, "Al-Kahf", 75, "Al-Kahf (verse 75) to Ta-Ha (verse 135)"),
+            Juz(17, "اقترب", "Aqtaraba", 21, "Al-Anbiya", 1, "Al-Anbiya (verse 1) to Al-Hajj (verse 78)"),
+            Juz(18, "قد أفلح", "Qad Aflaha", 23, "Al-Mu'minun", 1, "Al-Mu'minun (verse 1) to Al-Furqan (verse 20)"),
+            Juz(19, "وقال الذين", "Wa Qalallazina", 25, "Al-Furqan", 21, "Al-Furqan (verse 21) to An-Naml (verse 55)"),
+            Juz(20, "أمن خلق", "Amman Khalaqa", 27, "An-Naml", 56, "An-Naml (verse 56) to Al-'Ankabut (verse 45)"),
+            Juz(21, "اتل ما أوحي", "Otlu Ma Oohiya", 29, "Al-'Ankabut", 46, "Al-'Ankabut (verse 46) to Al-Ahzab (verse 30)"),
+            Juz(22, "ومن يقنت", "Wa Man Yaqnut", 33, "Al-Ahzab", 31, "Al-Ahzab (verse 31) to Yaseen (verse 27)"),
+            Juz(23, "وما لي", "Wa Maliya", 36, "Yaseen", 28, "Yaseen (verse 28) to Az-Zumar (verse 31)"),
+            Juz(24, "فمن أظلم", "Faman Azlam", 39, "Az-Zumar", 32, "Az-Zumar (verse 32) to Fussilat (verse 46)"),
+            Juz(25, "إليه يرد", "Elahe Yuraddo", 41, "Fussilat", 47, "Fussilat (verse 47) to Al-Jathiyah (verse 37)"),
+            Juz(26, "حم", "Ha' Meem", 46, "Al-Ahqaf", 1, "Al-Ahqaf (verse 1) to Adh-Dhariyat (verse 30)"),
+            Juz(27, "قال فما خطبكم", "Qala Fama Khatbukum", 51, "Adh-Dhariyat", 31, "Adh-Dhariyat (verse 31) to Al-Hadid (verse 29)"),
+            Juz(28, "قد سمع الله", "Qad Sami'allahu", 58, "Al-Mujadila", 1, "Al-Mujadila (verse 1) to At-Tahrim (verse 12)"),
+            Juz(29, "تبارك الذي", "Tabarakallazi", 67, "Al-Mulk", 1, "Al-Mulk (verse 1) to Al-Mursalat (verse 50)"),
+            Juz(30, "عم", "Amma", 78, "An-Naba", 1, "An-Naba (verse 1) to An-Nas (verse 6)")
+        )
+    }
+
     // Returns beautiful, complete, authentic translation and word-by-word info for selected surahs.
     // Generates high-quality authentic readings dynamically for other Surahs to ensure instant feedback and complete, lightweight coverage.
     fun getAyahsForSurah(surahNumber: Int): List<Ayah> {
@@ -214,6 +249,82 @@ object QuranDataProvider {
                     )
                 )
             )
+            103 -> listOf(
+                Ayah(
+                    1,
+                    "وَالْعَصْرِ",
+                    "By time,",
+                    "زمانہ کی قسم!",
+                    listOf(
+                        QuranWord("وَالْعَصْرِ", "By time", "زمانہ کی قسم", "Wal-'Asr")
+                    )
+                ),
+                Ayah(
+                    2,
+                    "إِنَّ الْإِنْسَانَ لَفِي خُسْرٍ",
+                    "Indeed, mankind is in loss,",
+                    "یقیناً انسان خسارے میں ہے،",
+                    listOf(
+                        QuranWord("إِنَّ", "Indeed", "یقیناً", "Inna"),
+                        QuranWord("الْإِنْسَانَ", "mankind", "انسان", "Al-Insana"),
+                        QuranWord("لَفِي", "is surely in", "ضرور میں ہے", "Lafi"),
+                        QuranWord("خُسْرٍ", "loss", "خسارے", "Khusr")
+                    )
+                ),
+                Ayah(
+                    3,
+                    "إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ",
+                    "Except for those who have believed and done righteous deeds and advised each other to truth and advised each other to patience.",
+                    "سوائے ان لوگوں کے جو ایمان لائے اور نیک اعمال کیے اور ایک دوسرے کو حق کی وصیت کی اور ایک دوسرے کو صبر کی تلقین کی۔",
+                    listOf(
+                        QuranWord("إِلَّا", "Except", "سوائے", "Illa"),
+                        QuranWord("الَّذِينَ", "those who", "ان لوگوں کے جو", "Alladhina"),
+                        QuranWord("آمَنُوا", "believed", "ایمان لائے", "Amanu"),
+                        QuranWord("وَعَمِلُوا", "and did", "اور کیے", "Wa-'Amilu"),
+                        QuranWord("الصَّالِحَاتِ", "righteous deeds", "نیک اعمال", "As-Salihati"),
+                        QuranWord("وَتَوَاصَوْا", "and advised each other", "اور ایک دوسرے کو وصیت کی", "Wa-Tawasaw"),
+                        QuranWord("بِالْحَقِّ", "to the truth", "حق کی", "Bil-Haqqi"),
+                        QuranWord("وَتَوَاصَوْا", "and advised each other", "اور ایک دوسرے کو وصیت کی", "Wa-Tawasaw"),
+                        QuranWord("بِالصَّبْرِ", "to patience", "صبر کی", "Bis-Sabri")
+                    )
+                )
+            )
+            108 -> listOf(
+                Ayah(
+                    1,
+                    "إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ",
+                    "Indeed, We have granted you, [O Muhammad], al-Kawthar.",
+                    "یقیناً ہم نے آپ کو کوثر (بہت زیادہ بھلائی) عطا فرمائی ہے۔",
+                    listOf(
+                        QuranWord("إِنَّا", "Indeed We", "یقیناً ہم نے", "Inna"),
+                        QuranWord("أَعْطَيْنَاكَ", "We granted you", "آپ کو عطا کیا", "A'tayna-ka"),
+                        QuranWord("الْكَوْثَرَ", "the Abundance", "کوثر", "Al-Kawthar")
+                    )
+                ),
+                Ayah(
+                    2,
+                    "فَصَلِّ لِرَبِّكَ وَانْحَرْ",
+                    "So pray to your Lord and sacrifice [to Him alone].",
+                    "پس آپ اپنے رب کے لیے نماز پڑھیں اور قربانی کریں۔",
+                    listOf(
+                        QuranWord("فَصَلِّ", "So pray", "پس آپ نماز پڑھیں", "Fa-salli"),
+                        QuranWord("لِرَبِّكَ", "to your Lord", "اپنے رب کے لیے", "Li-Rabbi-ka"),
+                        QuranWord("وَانْحَرْ", "and sacrifice", "اور قربانی کریں", "Wanhar")
+                    )
+                ),
+                Ayah(
+                    3,
+                    "إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ",
+                    "Indeed, your enemy is the one cut off.",
+                    "یقیناً آپ کا دشمن ہی جڑ کٹا (بے نام و نشان) ہے۔",
+                    listOf(
+                        QuranWord("إِنَّ", "Indeed", "یقیناً", "Inna"),
+                        QuranWord("شَانِئَكَ", "your enemy", "آپ کا دشمن", "Shani'a-ka"),
+                        QuranWord("هُوَ", "he", "وہی", "Huwa"),
+                        QuranWord("الْأَبْتَرُ", "the one cut off", "بے نسل / بے نام و نشان", "Al-Abtar")
+                    )
+                )
+            )
             112 -> listOf(
                 Ayah(
                     1,
@@ -263,6 +374,141 @@ object QuranDataProvider {
                     )
                 )
             )
+            113 -> listOf(
+                Ayah(
+                    1,
+                    "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ",
+                    "Say, \"I seek refuge in the Lord of daybreak",
+                    "کہہ دیجیئے: میں صبح کے رب کی پناہ مانگتا ہوں،",
+                    listOf(
+                        QuranWord("قُلْ", "Say", "کہہ دیجیئے", "Qul"),
+                        QuranWord("أَعُوذُ", "I seek refuge", "میں پناہ مانگتا ہوں", "A'udhu"),
+                        QuranWord("بِرَبِّ", "in the Lord (of)", "رب کی", "Bi-Rabbi"),
+                        QuranWord("الْفَلَقِ", "the daybreak", "صبح", "Al-Falaq")
+                    )
+                ),
+                Ayah(
+                    2,
+                    "مِنْ شَرِّ مَا خَلَقَ",
+                    "From the evil of that which He created",
+                    "ہر اس چیز کے شر سے جو اس نے پیدا کی،",
+                    listOf(
+                        QuranWord("مِنْ", "From", "سے", "Min"),
+                        QuranWord("شَرِّ", "the evil (of)", "شر", "Sharri"),
+                        QuranWord("مَا", "what", "جو / جو چیز", "Ma"),
+                        QuranWord("خَلَقَ", "He created", "اس نے پیدا کی", "Khalaq")
+                    )
+                ),
+                Ayah(
+                    3,
+                    "وَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ",
+                    "And from the evil of darkness when it settles",
+                    "اور اندھیری رات کے شر سے جب اس کا اندھیرا چھا جائے،",
+                    listOf(
+                        QuranWord("وَمِنْ", "And from", "اور سے", "Wa-Min"),
+                        QuranWord("شَرِّ", "the evil (of)", "شر", "Sharri"),
+                        QuranWord("غَاسِقٍ", "darkness", "اندھیری رات", "Ghasiqin"),
+                        QuranWord("إِذَا", "when", "جب", "Idha"),
+                        QuranWord("وَقَبَ", "it overspreads", "وہ چھا جائے", "Waqab")
+                    )
+                ),
+                Ayah(
+                    4,
+                    "وَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ",
+                    "And from the evil of the blowers in knots",
+                    "اور گرہوں میں پھونکنے والیوں (جادوگرنیوں) کے شر سے،",
+                    listOf(
+                        QuranWord("وَمِنْ", "And from", "اور سے", "Wa-Min"),
+                        QuranWord("شَرِّ", "the evil (of)", "شر", "Sharri"),
+                        QuranWord("النَّفَّاثَاتِ", "the blowers", "پھونکنے والیاں", "An-Naffathati"),
+                        QuranWord("فِي", "in", "میں", "Fi"),
+                        QuranWord("الْعُقَدِ", "the knots", "گرہوں", "Al-'Uqad")
+                    )
+                ),
+                Ayah(
+                    5,
+                    "وَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+                    "And from the evil of an envier when he envies.\"",
+                    "اور حسد کرنے والے کے شر سے جب وہ حسد کرے۔",
+                    listOf(
+                        QuranWord("وَمِنْ", "And from", "اور سے", "Wa-Min"),
+                        QuranWord("شَرِّ", "the evil (of)", "شر", "Sharri"),
+                        QuranWord("حَاسِدٍ", "an envier", "حسد کرنے والا", "Hasidin"),
+                        QuranWord("إِذَا", "when", "جب", "Idha"),
+                        QuranWord("حَسَدَ", "he envies", "وہ حسد کرے", "Hasad")
+                    )
+                )
+            )
+            114 -> listOf(
+                Ayah(
+                    1,
+                    "قُلْ أَعُوذُ بِرَبِّ النَّاسِ",
+                    "Say, \"I seek refuge in the Lord of mankind,",
+                    "کہہ دیجیئے: میں انسانوں کے رب کی پناہ مانگتا ہوں،",
+                    listOf(
+                        QuranWord("قُلْ", "Say", "کہہ دیجیئے", "Qul"),
+                        QuranWord("أَعُوذُ", "I seek refuge", "میں پناہ مانگتا ہوں", "A'udhu"),
+                        QuranWord("بِرَبِّ", "in the Lord (of)", "رب کی", "Bi-Rabbi"),
+                        QuranWord("النَّاسِ", "mankind", "انسانوں", "An-Nas")
+                    )
+                ),
+                Ayah(
+                    2,
+                    "مَلِكِ النَّاسِ",
+                    "The Sovereign of mankind,",
+                    "انسانوں کے بادشاہ کی،",
+                    listOf(
+                        QuranWord("مَلِكِ", "the King (of)", "بادشاہ", "Maliki"),
+                        QuranWord("النَّاسِ", "mankind", "انسانوں", "An-Nas")
+                    )
+                ),
+                Ayah(
+                    3,
+                    "إِلَٰهِ النَّاسِ",
+                    "The God of mankind,",
+                    "انسانوں کے معبود کی،",
+                    listOf(
+                        QuranWord("إِلَٰهِ", "the God (of)", "معبود", "Ilahi"),
+                        QuranWord("النَّاسِ", "mankind", "انسانوں", "An-Nas")
+                    )
+                ),
+                Ayah(
+                    4,
+                    "مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ",
+                    "From the evil of the retreating whisperer -",
+                    "وسوسہ ڈالنے والے پیچھے ہٹ جانے والے کے شر سے،",
+                    listOf(
+                        QuranWord("مِنْ", "From", "سے", "Min"),
+                        QuranWord("شَرِّ", "the evil (of)", "شر", "Sharri"),
+                        QuranWord("الْوَسْوَاسِ", "the whisperer", "وسوسہ ڈالنے والا", "Al-Waswasi"),
+                        QuranWord("الْخَنَّاسِ", "the one who withdraws", "پیچھے ہٹ جانے والا", "Al-Khannas")
+                    )
+                ),
+                Ayah(
+                    5,
+                    "الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ",
+                    "Who whispers [evil] into the breasts of mankind -",
+                    "جو لوگوں کے سینوں میں وسوسے ڈالتا ہے،",
+                    listOf(
+                        QuranWord("الَّذِي", "who", "جو کہ", "Alladhi"),
+                        QuranWord("يُوَسْوِسُ", "whispers", "وسوسے ڈالتا ہے", "Yuwaswisu"),
+                        QuranWord("فِي", "in", "میں", "Fi"),
+                        QuranWord("صُدُورِ", "breasts (of)", "سینوں", "Sudoori"),
+                        QuranWord("النَّاسِ", "mankind", "انسانوں", "An-Nas")
+                    )
+                ),
+                Ayah(
+                    6,
+                    "مِنَ الْجِنَّةِ وَالنَّاسِ",
+                    "From among the jinn and mankind.\"",
+                    "خواہ وہ جنات میں سے ہو یا انسانوں میں سے۔",
+                    listOf(
+                        QuranWord("مِنَ", "from", "میں سے", "Mina"),
+                        QuranWord("الْجِنَّةِ", "the jinn", "جنات", "Al-Jinnati"),
+                        QuranWord("وَالنَّاسِ", "and mankind", "اور انسانوں", "Wan-Nas")
+                    )
+                )
+            )
             else -> {
                 // Dynamically build a custom beautiful Quranic content block for the remaining Surahs
                 val surahs = getSurahList()
@@ -272,7 +518,7 @@ object QuranDataProvider {
                 ayahs.add(
                     Ayah(
                         1,
-                        "يس ۞ وَالْقُرْآنِ الْحَكِيمِ ۞ إِنَّكَ لَمِنَ الْمُرْسَلِينَ",
+                        "يس (1) وَالْقُرْآنِ الْحَكِيمِ (2) إِنَّكَ لَمِنَ الْمُرْسَلِينَ",
                         "Ya, Seen. By the wise Qur'an. Indeed you, [O Muhammad], are from among the messengers,",
                         "یس۔ قسم ہے حکمت والے قرآن کی۔ بیشک آپ رسولوں میں سے ہیں۔",
                         listOf(
@@ -286,7 +532,7 @@ object QuranDataProvider {
                 ayahs.add(
                     Ayah(
                         2,
-                        "عَلَىٰ صِرَاطٍ مُسْتَقِيمٍ ۞ تَنْزِيلَ الْعَزِيزِ الرَّحِيمِ",
+                        "عَلَىٰ صِرَاطٍ مُسْتَقِيمٍ (4) تَنْزِيلَ الْعَزِيزِ الرَّحِيمِ",
                         "On a straight path. [This is] a revelation of the Exalted in Might, the Merciful,",
                         "سیدھے راستے پر ہیں۔ (یہ) زبردست رحم کرنے والے کا نازل کردہ ہے۔",
                         listOf(
