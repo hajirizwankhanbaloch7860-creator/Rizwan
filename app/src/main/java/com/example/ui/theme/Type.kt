@@ -25,6 +25,16 @@ val QuranScheherazadeFontFamily = FontFamily(
     Font(googleFont = GoogleFont("Scheherazade New"), fontProvider = provider)
 )
 
+// Classic Persian/Indo-Pak Quranic Style (very elegant flowing curves)
+val LateefFontFamily = FontFamily(
+    Font(googleFont = GoogleFont("Lateef"), fontProvider = provider)
+)
+
+// Legible Modern Naskh Style
+val NotoNaskhArabicFontFamily = FontFamily(
+    Font(googleFont = GoogleFont("Noto Naskh Arabic"), fontProvider = provider)
+)
+
 // Urdu Font Family (Authentic Elegant Nastaliq Style)
 val NotoNastaliqUrduFontFamily = FontFamily(
     Font(googleFont = GoogleFont("Noto Nastaliq Urdu"), fontProvider = provider)

@@ -60,6 +60,8 @@ import com.example.utils.IslamicDateTimeUtils
 import com.example.ui.theme.AmiriFontFamily
 import com.example.ui.theme.QuranScheherazadeFontFamily
 import com.example.ui.theme.NotoNastaliqUrduFontFamily
+import com.example.ui.theme.LateefFontFamily
+import com.example.ui.theme.NotoNaskhArabicFontFamily
 import android.content.Intent
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -76,12 +78,21 @@ fun IslamicAppUi(viewModel: IslamicViewModel) {
     val activeReciter by viewModel.activeReciter.collectAsStateWithLifecycle()
 
     var activeTab by remember { mutableStateOf(0) } // 0: Home, 1: Quran, 2: Hadith, 3: Assistant, 4: Tools
+    var activeSubScreen by remember { mutableStateOf<String?>(null) }
 
     if (currentUser == null) {
         AuthScreen(onLogin = { method, user ->
             viewModel.loginAs(method, user)
             Toast.makeText(context, "Welcome, physical synchronization enabled!", Toast.LENGTH_SHORT).show()
         })
+    } else if (activeSubScreen != null) {
+        when (activeSubScreen) {
+            "SalahGuide" -> SalahGuideScreen(viewModel = viewModel, onBack = { activeSubScreen = null })
+            "Janazah" -> JanazahScreen(viewModel = viewModel, onBack = { activeSubScreen = null })
+            "AzanGuide" -> AzanGuideScreen(viewModel = viewModel, onBack = { activeSubScreen = null })
+            "PolicyCompliance" -> PolicyComplianceScreen(onBack = { activeSubScreen = null })
+            "OfflineQuranBook" -> OfflineQuranBookScreen(viewModel = viewModel, onBack = { activeSubScreen = null })
+        }
     } else {
         Scaffold(
             bottomBar = {
@@ -130,11 +141,11 @@ fun IslamicAppUi(viewModel: IslamicViewModel) {
                     .padding(paddingValues)
             ) {
                 when (activeTab) {
-                    0 -> DashboardScreen(viewModel = viewModel, onTabSelected = { activeTab = it })
-                    1 -> QuranScreen(viewModel = viewModel)
+                    0 -> DashboardScreen(viewModel = viewModel, onTabSelected = { activeTab = it }, onNavigateToSubScreen = { activeSubScreen = it })
+                    1 -> QuranScreen(viewModel = viewModel, onNavigateToSubScreen = { activeSubScreen = it })
                     2 -> HadithScreen(viewModel = viewModel)
                     3 -> AssistantScreen(viewModel = viewModel)
-                    4 -> ToolsScreen(viewModel = viewModel)
+                    4 -> ToolsScreen(viewModel = viewModel, onNavigateToSubScreen = { activeSubScreen = it })
                 }
             }
         }
@@ -421,7 +432,7 @@ fun IslamicCrescent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(viewModel: IslamicViewModel, onTabSelected: (Int) -> Unit) {
+fun DashboardScreen(viewModel: IslamicViewModel, onTabSelected: (Int) -> Unit, onNavigateToSubScreen: (String) -> Unit) {
     val currentAddress by viewModel.currentAddress.collectAsStateWithLifecycle()
     val prayerTimes by viewModel.prayerTimes.collectAsStateWithLifecycle()
     val hijriDate by viewModel.hijriDate.collectAsStateWithLifecycle()
@@ -789,6 +800,149 @@ fun DashboardScreen(viewModel: IslamicViewModel, onTabSelected: (Int) -> Unit) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        // --- NEW SACRED LEARNING GUIDES ---
+        Text(
+            text = "Sacred Learning Guides",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(bottom = 10.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Card 1: How to Perform Salah
+            Card(
+                onClick = { onNavigateToSubScreen("SalahGuide") },
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(115.dp)
+                    .testTag("menu_salah_guide")
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(14.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Column {
+                        Icon(
+                            imageVector = Icons.Default.PlayCircle,
+                            contentDescription = "Salah Guide",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Learn Salah",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Step-by-Step Tutorial",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Card 2: Janazah Prayer Guide
+            Card(
+                onClick = { onNavigateToSubScreen("Janazah") },
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(115.dp)
+                    .testTag("menu_janazah_guide")
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(14.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Column {
+                        Icon(
+                            imageVector = Icons.Default.Group,
+                            contentDescription = "Janazah Guide",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Salat al-Janazah",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Four Takbeers & Duas",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Card 3: Learn Azan & Iqamah (Full Width)
+        Card(
+            onClick = { onNavigateToSubScreen("AzanGuide") },
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(20.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(85.dp)
+                .testTag("menu_azan_guide")
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 12.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Campaign,
+                            contentDescription = "Azan Guide",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "Learn Azan & Iqamah",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Arabic recitation, translations, and voice lessons.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         // Hijri Calendar Card with Dynamic Custom Day names
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -1069,13 +1223,44 @@ fun DashboardScreen(viewModel: IslamicViewModel, onTabSelected: (Int) -> Unit) {
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Privacy Policy Compliance Footer Card
+        Card(
+            onClick = { onNavigateToSubScreen("PolicyCompliance") },
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PrivacyTip,
+                    contentDescription = "Privacy Policy",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Google Play Policy, Privacy & Data Safety Center",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 // --- SCREEN 1: QURAN SCREEN (SURAH LIST & READER VIEW) ---
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-fun QuranScreen(viewModel: IslamicViewModel) {
+fun QuranScreen(viewModel: IslamicViewModel, onNavigateToSubScreen: (String) -> Unit = {}) {
     val selectedSurah by viewModel.selectedSurah.collectAsStateWithLifecycle()
     val ayahList by viewModel.ayahList.collectAsStateWithLifecycle()
     val isQuranLoading by viewModel.isQuranLoading.collectAsStateWithLifecycle()
@@ -1088,6 +1273,20 @@ fun QuranScreen(viewModel: IslamicViewModel) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedWordForWbw by remember { mutableStateOf<QuranWord?>(null) }
     var isWbwSheetOpen by remember { mutableStateOf(false) }
+
+    // Lifted shared layout and style states for consistency across all Quran views
+    var mushafTextSize by remember { mutableStateOf(28f) } // Default 28.sp (clear, large display)
+    var mushafShowTranslation by remember { mutableStateOf(false) } // Default false (Arabic self-reading)
+    var mushafShowUrdu by remember { mutableStateOf(true) } // Urdu vs English translation
+    var mushafFontSelected by remember { mutableStateOf("Lateef") } // Default "Lateef" (Classic Persian / Indo-Pak Quranic Style)
+    var mushafLineSpacingMultiplier by remember { mutableStateOf(1.8f) } // Generous default multiplier so words never touch vertically
+
+    val mushafFontFamily = when (mushafFontSelected) {
+        "Lateef" -> LateefFontFamily
+        "Amiri" -> AmiriFontFamily
+        "Noto Naskh" -> NotoNaskhArabicFontFamily
+        else -> QuranScheherazadeFontFamily
+    }
 
     // Notes adding states
     var isAddNoteOpen by remember { mutableStateOf(false) }
@@ -1110,9 +1309,6 @@ fun QuranScreen(viewModel: IslamicViewModel) {
         // --- SURAH LIST VIEW ---
         var quranListTabSelected by remember { mutableStateOf(0) } // 0 = Surahs, 1 = Juz, 2 = Mushaf / Offline Read
         var mushafSelectedSurahNum by remember { mutableStateOf(1) } // Default Al-Fatiha
-        var mushafTextSize by remember { mutableStateOf(26f) } // Default 26.sp
-        var mushafShowTranslation by remember { mutableStateOf(false) } // Default false (Arabic only self-reading!)
-        var mushafShowUrdu by remember { mutableStateOf(true) } // Urdu vs English translation
         var isSurahSelectorOpen by remember { mutableStateOf(false) }
 
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -1201,14 +1397,20 @@ fun QuranScreen(viewModel: IslamicViewModel) {
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                listOf("Surahs", "Juz / Parts", "Offline Mushaf").forEachIndexed { index, label ->
+                listOf("Surahs", "Juz / Parts", "Offline Quran Book").forEachIndexed { index, label ->
                     val isSelected = quranListTabSelected == index
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                            .clickable { quranListTabSelected = index }
+                            .clickable { 
+                                if (index == 2) {
+                                    onNavigateToSubScreen("OfflineQuranBook")
+                                } else {
+                                    quranListTabSelected = index
+                                }
+                            }
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -1414,295 +1616,47 @@ fun QuranScreen(viewModel: IslamicViewModel) {
                     }
                 }
                 2 -> {
-                    // --- TAB 2: OFFLINE MUSHAF ---
-                    val mushafSurah = viewModel.surahList.firstOrNull { it.number == mushafSelectedSurahNum } ?: viewModel.surahList[0]
-                    val mushafAyahs = QuranDataProvider.getAyahsForSurah(mushafSelectedSurahNum)
-
+                    // --- TAB 2: OFFLINE QURAN BOOK ---
                     Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        // Top Quick selector controls
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    // Surah selector button
-                                    Button(
-                                        onClick = { isSurahSelectorOpen = true },
-                                        shape = RoundedCornerShape(8.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                                    ) {
-                                        Icon(Icons.Default.Book, contentDescription = "Select Surah", modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Surah: ${mushafSurah.nameEnglish} (${mushafSurah.number})", fontSize = 12.sp)
-                                    }
-
-                                    // Font size adjustment buttons
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text("A-", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.clickable { if (mushafTextSize > 18f) mushafTextSize -= 2f })
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Slider(
-                                            value = mushafTextSize,
-                                            onValueChange = { mushafTextSize = it },
-                                            valueRange = 18f..45f,
-                                            modifier = Modifier.width(80.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("A+", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.clickable { if (mushafTextSize < 45f) mushafTextSize += 2f })
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    // Show translation toggle
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Checkbox(
-                                            checked = mushafShowTranslation,
-                                            onCheckedChange = { mushafShowTranslation = it },
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("ترجمہ دکھائیں (Translation)", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                    }
-
-                                    // English / Urdu translation picker
-                                    if (mushafShowTranslation) {
-                                        Row(
-                                            modifier = Modifier
-                                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
-                                                .padding(2.dp)
-                                        ) {
-                                            Text(
-                                                text = "Urdu",
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = if (mushafShowUrdu) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                                modifier = Modifier
-                                                    .background(if (mushafShowUrdu) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(6.dp))
-                                                    .clickable { mushafShowUrdu = true }
-                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                                            )
-                                            Text(
-                                                text = "English",
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = if (!mushafShowUrdu) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                                modifier = Modifier
-                                                    .background(if (!mushafShowUrdu) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(6.dp))
-                                                    .clickable { mushafShowUrdu = false }
-                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // The Mushaf Pages Book Canvas
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFDFBF7)), // Beautiful authentic ivory color
-                            border = BorderStroke(2.dp, Color(0xFFD4AF37)), // Gold border decoration
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(14.dp)
-                            ) {
-                                // Surah Banner Title inside the book
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(Color(0xFF8B0000).copy(alpha = 0.05f), RoundedCornerShape(8.dp))
-                                        .border(BorderStroke(1.dp, Color(0xFFD4AF37)), RoundedCornerShape(8.dp))
-                                        .padding(8.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(
-                                            text = mushafSurah.nameArabic,
-                                            fontFamily = QuranScheherazadeFontFamily,
-                                            fontSize = 24.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF8B0000)
-                                        )
-                                        Text(
-                                            text = "Surah ${mushafSurah.nameEnglish} • ${mushafSurah.ayahsCount} Verses",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFFD4AF37)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                if (mushafSelectedSurahNum != 1 && mushafSelectedSurahNum != 9) {
-                                    // Prepend Bismillah
-                                    Text(
-                                        text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                                        fontFamily = QuranScheherazadeFontFamily,
-                                        fontSize = (mushafTextSize + 4).sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF1B4D3E),
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
-                                    )
-                                }
-
-                                LazyColumn(
-                                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    items(mushafAyahs) { ayah ->
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(bottom = 8.dp)
-                                        ) {
-                                            // Arabic text
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.End,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                // Bookmark icon for offline bookmarking
-                                                val isBookmarked = quranBookmarks.any { it.surahNumber == mushafSurah.number && it.ayahNumber == ayah.numberInSurah }
-                                                IconButton(
-                                                    onClick = { viewModel.toggleQuranBookmark(mushafSurah, ayah) },
-                                                    modifier = Modifier.size(24.dp)
-                                                ) {
-                                                    Icon(
-                                                        imageVector = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                                                        contentDescription = "Bookmark",
-                                                        tint = if (isBookmarked) Color(0xFFD4AF37) else Color.LightGray,
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                }
-
-                                                Spacer(modifier = Modifier.weight(1f))
-
-                                                // Verse Arabic Text
-                                                Text(
-                                                    text = ayah.textArabic,
-                                                    fontFamily = QuranScheherazadeFontFamily,
-                                                    fontSize = mushafTextSize.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color(0xFF1B4D3E), // Deep emerald green
-                                                    textAlign = TextAlign.Right,
-                                                    modifier = Modifier.weight(9f)
-                                                )
-                                            }
-
-                                            // Verse badge inside Mushaf
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.End
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .padding(top = 4.dp)
-                                                        .border(BorderStroke(1.dp, Color(0xFFD4AF37)), CircleShape)
-                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                                ) {
-                                                    Text(
-                                                        text = "Verse ${ayah.numberInSurah}",
-                                                        fontSize = 9.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = Color(0xFFD4AF37)
-                                                    )
-                                                }
-                                            }
-
-                                            // Translation
-                                            if (mushafShowTranslation) {
-                                                Spacer(modifier = Modifier.height(4.dp))
-                                                Text(
-                                                    text = if (mushafShowUrdu) ayah.textUrdu else ayah.textEnglish,
-                                                    fontFamily = if (mushafShowUrdu) NotoNastaliqUrduFontFamily else FontFamily.Default,
-                                                    fontSize = (mushafTextSize * 0.55).sp,
-                                                    color = Color.DarkGray,
-                                                    textAlign = if (mushafShowUrdu) TextAlign.Right else TextAlign.Left,
-                                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
-                                                )
-                                            }
-
-                                            Divider(
-                                                color = Color(0xFFD4AF37).copy(alpha = 0.2f),
-                                                thickness = 1.dp,
-                                                modifier = Modifier.padding(top = 12.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Surah selection Dialog
-                    if (isSurahSelectorOpen) {
-                        AlertDialog(
-                            onDismissRequest = { isSurahSelectorOpen = false },
-                            title = { Text("Select Surah to Read", fontWeight = FontWeight.Bold) },
-                            text = {
-                                Column(modifier = Modifier.height(400.dp)) {
-                                    var dialogSearch by remember { mutableStateOf("") }
-                                    OutlinedTextField(
-                                        value = dialogSearch,
-                                        onValueChange = { dialogSearch = it },
-                                        placeholder = { Text("Search Surah...") },
-                                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                                        shape = RoundedCornerShape(8.dp)
-                                    )
-                                    val filteredDialogSurahs = viewModel.surahList.filter {
-                                        it.nameEnglish.contains(dialogSearch, ignoreCase = true) ||
-                                        it.number.toString().contains(dialogSearch)
-                                    }
-                                    LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        items(filteredDialogSurahs) { surah ->
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable {
-                                                        mushafSelectedSurahNum = surah.number
-                                                        isSurahSelectorOpen = false
-                                                    }
-                                                    .padding(vertical = 10.dp, horizontal = 6.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Row {
-                                                    Text("${surah.number}. ", fontWeight = FontWeight.Bold)
-                                                    Text(surah.nameEnglish)
-                                                }
-                                                Text(surah.nameArabic, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            confirmButton = {
-                                TextButton(onClick = { isSurahSelectorOpen = false }) {
-                                    Text("Dismiss")
-                                }
-                            }
+                        Icon(
+                            imageVector = Icons.Default.MenuBook,
+                            contentDescription = "Quran Book",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(80.dp)
                         )
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Text(
+                            text = "Offline Quran Page Book (Mushaf)",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "A beautiful page-by-page full-screen offline book view of the Holy Quran featuring custom calligraphic fonts, English & Urdu translations, dynamic bookmarking, and native offline voice recitation.",
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 18.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(28.dp))
+                        Button(
+                            onClick = { onNavigateToSubScreen("OfflineQuranBook") },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth(0.8f).height(48.dp)
+                        ) {
+                            Icon(Icons.Default.Launch, contentDescription = "Launch", tint = Color.White)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Open Offline Quran Book", fontWeight = FontWeight.Bold, color = Color.White)
+                        }
                     }
                 }
             }
@@ -1710,6 +1664,7 @@ fun QuranScreen(viewModel: IslamicViewModel) {
     } else {
         // --- SURAH READER VIEW ---
         val activeSurah = selectedSurah!!
+        var isDisplaySettingsExpanded by remember { mutableStateOf(false) }
 
         Column(modifier = Modifier.fillMaxSize()) {
             // Elegant Top Surah header bar
@@ -1771,6 +1726,128 @@ fun QuranScreen(viewModel: IslamicViewModel) {
 
             Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
+            // Beautiful display style options to match the offline Quran perfectly
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { isDisplaySettingsExpanded = !isDisplaySettingsExpanded }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Display Settings",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Quran Display & Font Settings",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Icon(
+                            imageVector = if (isDisplaySettingsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isDisplaySettingsExpanded) "Collapse" else "Expand",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    if (isDisplaySettingsExpanded) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            // Font style selector
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("رسم الخط (Font style):", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Row {
+                                    listOf("Lateef", "Amiri", "Noto Naskh").forEach { fontName ->
+                                        val isSelected = mushafFontSelected == fontName
+                                        val displayName = when (fontName) {
+                                            "Lateef" -> "Persian"
+                                            "Amiri" -> "Uthmanic"
+                                            "Noto Naskh" -> "Modern"
+                                            else -> "Standard"
+                                        }
+                                        Text(
+                                            text = displayName,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier
+                                                .padding(horizontal = 2.dp)
+                                                .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(6.dp))
+                                                .clickable { mushafFontSelected = fontName }
+                                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Font size adjustment
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("حجم الحرف (Font Size):", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("A-", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.clickable { if (mushafTextSize > 18f) mushafTextSize -= 2f })
+                                    Slider(
+                                        value = mushafTextSize,
+                                        onValueChange = { mushafTextSize = it },
+                                        valueRange = 18f..45f,
+                                        modifier = Modifier.width(90.dp)
+                                    )
+                                    Text("A+", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.clickable { if (mushafTextSize < 45f) mushafTextSize += 2f })
+                                }
+                            }
+
+                            // Line spacing adjustment
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("فاصلہ (Line Spacing):", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Row {
+                                    listOf(1.6f, 1.8f, 2.0f, 2.2f).forEach { spacing ->
+                                        val isSelected = mushafLineSpacingMultiplier == spacing
+                                        Text(
+                                            text = "${spacing}x",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier
+                                                .padding(horizontal = 2.dp)
+                                                .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, RoundedCornerShape(6.dp))
+                                                .clickable { mushafLineSpacingMultiplier = spacing }
+                                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             val listState = rememberLazyListState()
 
             // Auto-scroll to currently playing Ayah to center it
@@ -1830,10 +1907,13 @@ fun QuranScreen(viewModel: IslamicViewModel) {
                         ) {
                             Text(
                                 text = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                                fontSize = 24.sp,
+                                fontFamily = mushafFontFamily,
+                                fontSize = (mushafTextSize + 2).sp,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                lineHeight = ((mushafTextSize + 2) * mushafLineSpacingMultiplier).sp,
+                                modifier = Modifier.padding(vertical = 12.dp)
                             )
                         }
                     }
@@ -1904,14 +1984,15 @@ fun QuranScreen(viewModel: IslamicViewModel) {
                                     // Full continuous Arabic text of the Ayah
                                     Text(
                                         text = ayah.textArabic,
-                                        fontFamily = QuranScheherazadeFontFamily,
-                                        fontSize = 28.sp,
+                                        fontFamily = mushafFontFamily,
+                                        fontSize = mushafTextSize.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary,
                                         textAlign = TextAlign.Start, // Since parent is RTL, Start is the right side
+                                        lineHeight = (mushafTextSize * mushafLineSpacingMultiplier).sp,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(bottom = 12.dp)
+                                            .padding(vertical = 10.dp)
                                     )
 
                                     // Interactive Word-by-Word flow
@@ -1937,11 +2018,12 @@ fun QuranScreen(viewModel: IslamicViewModel) {
                                             ) {
                                                 Text(
                                                     text = word.arabic,
-                                                    fontFamily = QuranScheherazadeFontFamily,
-                                                    fontSize = 22.sp,
+                                                    fontFamily = mushafFontFamily,
+                                                    fontSize = (mushafTextSize * 0.8).sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.primary,
-                                                    textAlign = TextAlign.Center
+                                                    textAlign = TextAlign.Center,
+                                                    lineHeight = (mushafTextSize * 0.8 * mushafLineSpacingMultiplier).sp
                                                 )
                                             }
                                         }
@@ -1963,12 +2045,12 @@ fun QuranScreen(viewModel: IslamicViewModel) {
                                 Text(
                                     text = "Urdu: ${ayah.textUrdu}",
                                     fontFamily = NotoNastaliqUrduFontFamily,
-                                    fontSize = 17.sp,
-                                    lineHeight = 28.sp,
+                                    fontSize = (mushafTextSize * 0.62).sp,
+                                    lineHeight = (mushafTextSize * 0.62 * 1.8f).sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
+                                        .padding(vertical = 6.dp)
                                 )
                             }
                         }
@@ -2498,12 +2580,13 @@ fun HadithScreen(viewModel: IslamicViewModel) {
 
                             Text(
                                 text = hadith.textArabic,
-                                fontFamily = QuranScheherazadeFontFamily,
-                                fontSize = 22.sp,
+                                fontFamily = LateefFontFamily,
+                                fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
                                 textAlign = TextAlign.Right,
-                                modifier = Modifier.fillMaxWidth()
+                                lineHeight = 44.sp,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -2529,10 +2612,10 @@ fun HadithScreen(viewModel: IslamicViewModel) {
                                 Text(
                                     text = "Urdu: ${hadith.textUrdu}",
                                     fontFamily = NotoNastaliqUrduFontFamily,
-                                    fontSize = 16.sp,
-                                    lineHeight = 26.sp,
+                                    fontSize = 17.sp,
+                                    lineHeight = 32.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                                 )
                             }
                         }
@@ -2734,7 +2817,7 @@ fun AssistantScreen(viewModel: IslamicViewModel) {
 
 // --- SCREEN 4: ADDITIONAL ISLAMIC TOOLS (GRID SELECTION) ---
 @Composable
-fun ToolsScreen(viewModel: IslamicViewModel) {
+fun ToolsScreen(viewModel: IslamicViewModel, onNavigateToSubScreen: (String) -> Unit) {
     var selectedTool by remember { mutableStateOf<String?>(null) }
 
     if (selectedTool == null) {
@@ -2748,6 +2831,11 @@ fun ToolsScreen(viewModel: IslamicViewModel) {
             Spacer(modifier = Modifier.height(16.dp))
 
             val tools = listOf(
+                Pair("Offline Quran (Page Book)", Icons.Default.MenuBook),
+                Pair("How to Perform Salah", Icons.Default.PlayCircle),
+                Pair("Janazah Prayer Guide", Icons.Default.Group),
+                Pair("Learn Azan (Call to Prayer)", Icons.Default.NotificationsActive),
+                Pair("Policy & Compliance", Icons.Default.PrivacyTip),
                 Pair("Qibla Compass", Icons.Default.Explore),
                 Pair("Virtual Tasbeeh", Icons.Default.Dialpad),
                 Pair("Islamic Calendar", Icons.Default.CalendarMonth),
@@ -2770,7 +2858,21 @@ fun ToolsScreen(viewModel: IslamicViewModel) {
             ) {
                 items(tools) { (name, icon) ->
                     Card(
-                        onClick = { selectedTool = name },
+                        onClick = {
+                            if (name == "Offline Quran (Page Book)") {
+                                onNavigateToSubScreen("OfflineQuranBook")
+                            } else if (name == "How to Perform Salah") {
+                                onNavigateToSubScreen("SalahGuide")
+                            } else if (name == "Janazah Prayer Guide") {
+                                onNavigateToSubScreen("Janazah")
+                            } else if (name == "Learn Azan (Call to Prayer)") {
+                                onNavigateToSubScreen("AzanGuide")
+                            } else if (name == "Policy & Compliance") {
+                                onNavigateToSubScreen("PolicyCompliance")
+                            } else {
+                                selectedTool = name
+                            }
+                        },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier
@@ -3121,7 +3223,16 @@ fun SupplicationsTool(viewModel: IslamicViewModel) {
                     Text(dua.title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
                     Text("Category: ${dua.category} • Ref: ${dua.reference}", fontSize = 10.sp, color = MaterialTheme.colorScheme.tertiary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(dua.textArabic, fontFamily = QuranScheherazadeFontFamily, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Right, modifier = Modifier.fillMaxWidth())
+                    Text(
+                        text = dua.textArabic,
+                        fontFamily = LateefFontFamily,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Right,
+                        lineHeight = 44.sp,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text("Eng: ${dua.translationEnglish}", fontSize = 12.sp)
                     Spacer(modifier = Modifier.height(4.dp))
@@ -3129,10 +3240,10 @@ fun SupplicationsTool(viewModel: IslamicViewModel) {
                         Text(
                             text = "Urdu: ${dua.translationUrdu}",
                             fontFamily = NotoNastaliqUrduFontFamily,
-                            fontSize = 15.sp,
-                            lineHeight = 24.sp,
+                            fontSize = 17.sp,
+                            lineHeight = 32.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                         )
                     }
                 }

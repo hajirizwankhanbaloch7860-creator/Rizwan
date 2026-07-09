@@ -80,4 +80,20 @@ interface IslamicDao {
 
     @Query("DELETE FROM islamic_alarms WHERE id = :id")
     suspend fun deleteIslamicAlarm(id: Int)
+
+    // --- Cached Ayahs (Full Quran Offline Storage) ---
+    @Query("SELECT COUNT(*) FROM cached_ayahs")
+    suspend fun getCachedAyahsCount(): Int
+
+    @Query("SELECT * FROM cached_ayahs WHERE surahNumber = :surahNumber ORDER BY numberInSurah ASC")
+    suspend fun getCachedAyahsForSurah(surahNumber: Int): List<CachedAyah>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCachedAyahs(ayahs: List<CachedAyah>)
+
+    @Query("DELETE FROM cached_ayahs")
+    suspend fun clearCachedAyahs()
+
+    @Query("DELETE FROM cached_ayahs WHERE surahNumber = :surahNumber")
+    suspend fun deleteCachedAyahsForSurah(surahNumber: Int)
 }

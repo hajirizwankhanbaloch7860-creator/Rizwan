@@ -249,6 +249,229 @@ object QuranDataProvider {
                     )
                 )
             )
+            93 -> listOf(
+                Ayah(
+                    1,
+                    "وَالضُّحَىٰ",
+                    "By the morning brightness",
+                    "چاشت کے وقت کی قسم!",
+                    listOf(
+                        QuranWord("وَالضُّحَىٰ", "By the morning brightness", "چاشت کے وقت کی قسم", "Waddoo-ha")
+                    )
+                ),
+                Ayah(
+                    2,
+                    "وَاللَّيْلِ إِذَا سَجَىٰ",
+                    "And [by] the night when it covers with darkness,",
+                    "اور رات کی قسم جب وہ چھا جائے!",
+                    listOf(
+                        QuranWord("وَاللَّيْلِ", "And the night", "اور رات کی قسم", "Wal-layli"),
+                        QuranWord("إِذَا", "when", "جب", "itha"),
+                        QuranWord("سَجَىٰ", "it covers with darkness", "وہ چھا جائے / پرسکون ہو جائے", "saja")
+                    )
+                ),
+                Ayah(
+                    3,
+                    "مَا وَدَّعَكَ رَبُّكَ وَمَا قَلَىٰ",
+                    "Your Lord has not taken leave of you, [O Muhammad], nor has He detested [you].",
+                    "آپ کے رب نے نہ تو آپ کو چھوڑا ہے اور نہ ہی وہ آپ سے ناراض ہوا ہے۔",
+                    listOf(
+                        QuranWord("مَا", "Not", "نہیں", "Ma"),
+                        QuranWord("وَدَّعَكَ", "has forsaken you", "آپ کو چھوڑا", "wadda'aka"),
+                        QuranWord("رَبُّكَ", "your Lord", "آپ کے رب نے", "Rabbuka"),
+                        QuranWord("وَمَا", "and not", "اور نہ ہی", "wa ma"),
+                        QuranWord("قَلَىٰ", "is displeased", "ناراض ہوا", "qala")
+                    )
+                ),
+                Ayah(
+                    4,
+                    "وَلَلْآخِرَةُ خَيْرٌ لَّكَ مِنَ الْأُولَىٰ",
+                    "And the Hereafter is better for you than the first [life].",
+                    "اور یقیناً آخرت آپ کے لیے پہلی زندگی (دنیا) سے بہت بہتر ہے۔",
+                    listOf(
+                        QuranWord("وَلَلْآخِرَةُ", "And surely the Hereafter", "اور یقیناً آخرت", "Wa lal-akhiratu"),
+                        QuranWord("خَيْرٌ", "is better", "بہتر ہے", "khayrun"),
+                        QuranWord("لَّكَ", "for you", "آپ کے لیے", "laka"),
+                        QuranWord("مِنَ", "than", "سے", "mina"),
+                        QuranWord("الْأُولَىٰ", "the first (life)", "پہلی زندگی (دنیا)", "al-oola")
+                    )
+                ),
+                Ayah(
+                    5,
+                    "وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ",
+                    "And your Lord is going to give you, and you will be satisfied.",
+                    "اور عنقریب آپ کا رب آپ کو اتنا عطا فرمائے گا کہ آپ خوش ہو جائیں گے۔",
+                    listOf(
+                        QuranWord("وَلَسَوْفَ", "And surely soon", "اور عنقریب", "Wa lasawfa"),
+                        QuranWord("يُعْطِيكَ", "will give you", "آپ کو عطا فرمائے گا", "yu'teeka"),
+                        QuranWord("رَبُّكَ", "your Lord", "آپ کا رب", "Rabbuka"),
+                        QuranWord("فَتَرْضَىٰ", "so you will be satisfied", "پس آپ خوش ہو جائیں گے", "fatarda")
+                    )
+                ),
+                Ayah(
+                    6,
+                    "أَلَمْ يَجِدْكَ يَتِيمًا فَآوَىٰ",
+                    "Did He not find you an orphan and give [you] refuge?",
+                    "کیا اس نے آپ کو یتیم نہیں پایا پھر پناہ دی؟",
+                    listOf(
+                        QuranWord("أَلَمْ", "Did not", "کیا نہیں", "Alam"),
+                        QuranWord("يَجِدْكَ", "He find you", "اس نے آپ کو پایا", "yajidka"),
+                        QuranWord("يَتِيمًا", "an orphan", "یتیم", "yateeman"),
+                        QuranWord("فَآوَىٰ", "so He gave refuge", "پس اس نے پناہ دی", "fa-awa")
+                    )
+                ),
+                Ayah(
+                    7,
+                    "وَوَجَدَكَ ضَالًّا فَهَدَىٰ",
+                    "And He found you lost and guided [you],",
+                    "اور اس نے آپ کو جستجو میں پایا تو راستہ دکھایا؟",
+                    listOf(
+                        QuranWord("وَوَجَدَكَ", "And He found you", "اور اس نے آپ کو پایا", "Wa wajadaka"),
+                        QuranWord("ضَالًّا", "lost / searching", "ناواقف / متلاشی", "dallan"),
+                        QuranWord("فَهَدَىٰ", "so He guided", "تو ہدایت دی", "fahada")
+                    )
+                ),
+                Ayah(
+                    8,
+                    "وَوَجَدَكَ عَائِلًا فَأَغْنَىٰ",
+                    "And He found you poor and made [you] self-sufficient.",
+                    "اور اس نے آپ کو نادار پایا تو غنی کر دیا۔",
+                    listOf(
+                        QuranWord("وَوَجَدَكَ", "And He found you", "اور اس نے آپ کو پایا", "Wa wajadaka"),
+                        QuranWord("عَائِلًا", "poor / needy", "نادار / تنگ دست", "'a'ilan"),
+                        QuranWord("فَأَغْنَىٰ", "so He enriched", "تو غنی کر دیا", "fa-aghna")
+                    )
+                ),
+                Ayah(
+                    9,
+                    "فَأَمَّا الْيَتِيمَ فَلَا تَقْهَرْ",
+                    "So as for the orphan, do not oppress [him].",
+                    "پس آپ بھی یتیم پر سختی نہ کریں۔",
+                    listOf(
+                        QuranWord("فَأَمَّا", "So as for", "پس جہاں تک", "Fa-ammal"),
+                        QuranWord("الْيَتِيمَ", "the orphan", "یتیم کا تعلق ہے", "yateema"),
+                        QuranWord("فَلَا", "then do not", "تو نہ", "fala"),
+                        QuranWord("تَقْهَرْ", "oppress / treat harshly", "سختی کریں / مغلوب کریں", "taqhar")
+                    )
+                ),
+                Ayah(
+                    10,
+                    "وَأَمَّا السَّائِلَ فَلَا تَنْهَرْ",
+                    "And as for the petitioner, do not repel [him].",
+                    "اور مانگنے والے کو نہ جھڑکیں۔",
+                    listOf(
+                        QuranWord("وَأَمَّا", "And as for", "اور جہاں تک", "Wa ammas"),
+                        QuranWord("السَّائِلَ", "the beggar / petitioner", "مانگنے والے کا تعلق ہے", "sa'ila"),
+                        QuranWord("فَلَا", "then do not", "تو نہ", "fala"),
+                        QuranWord("تَنْهَرْ", "repel / scold", "جھڑکیں", "tanhar")
+                    )
+                ),
+                Ayah(
+                    11,
+                    "وَأَمَّا بِنِعْمَةِ رَبِّكَ فَحَدِّثْ",
+                    "And as for the favor of your Lord, report [it].",
+                    "اور اپنے رب کی نعمتوں کا ذکر کرتے رہیں۔",
+                    listOf(
+                        QuranWord("وَأَمَّا", "And as for", "اور جہاں تک", "Wa amma"),
+                        QuranWord("بِنِعْمَةِ", "with favor / blessing", "نعمت کا تعلق ہے", "bini'mati"),
+                        QuranWord("رَبِّكَ", "(of) your Lord", "اپنے رب کی", "Rabbika"),
+                        QuranWord("فَحَدِّثْ", "proclaim / speak", "بیان کرتے رہیں", "fahaddith")
+                    )
+                )
+            )
+            94 -> listOf(
+                Ayah(
+                    1,
+                    "أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ",
+                    "Did We not expand for you, [O Muhammad], your breast?",
+                    "کیا ہم نے آپ کا سینہ کشادہ نہیں کر دیا؟",
+                    listOf(
+                        QuranWord("أَلَمْ", "Did not", "کیا نہیں", "Alam"),
+                        QuranWord("نَشْرَحْ", "We expand", "ہم نے کھول دیا", "nashrah"),
+                        QuranWord("لَكَ", "for you", "آپ کے لیے", "laka"),
+                        QuranWord("صَدْرَكَ", "your breast", "آپ کا سینہ", "sadraka")
+                    )
+                ),
+                Ayah(
+                    2,
+                    "وَوَضَعْنَا عَنكَ وِزْرَكَ",
+                    "And We removed from you your burden",
+                    "اور ہم نے آپ پر سے آپ کا بوجھ اتار دیا،",
+                    listOf(
+                        QuranWord("وَوَضَعْنَا", "And We removed", "اور ہم نے اتار دیا", "Wa wada'na"),
+                        QuranWord("عَنكَ", "from you", "آپ سے", "anka"),
+                        QuranWord("وِزْرَكَ", "your burden", "آپ کا بوجھ", "wizraka")
+                    )
+                ),
+                Ayah(
+                    3,
+                    "الَّذِي أَنقَضَ ظَهْرَكَ",
+                    "Which weighed upon your back",
+                    "جس نے آپ کی پیٹھ کو دہرا کر دیا تھا؟",
+                    listOf(
+                        QuranWord("الَّذِي", "Which", "جس نے", "Alladhi"),
+                        QuranWord("أَنقَضَ", "weighed heavy on", "تھکا دیا تھا / بوجھ ڈالا", "anqada"),
+                        QuranWord("ظَهْرَكَ", "your back", "آپ کی پیٹھ پر", "zahraka")
+                    )
+                ),
+                Ayah(
+                    4,
+                    "وَرَفَعْنَا لَكَ ذِكْرَكَ",
+                    "And raised high for you your repute.",
+                    "اور ہم نے آپ کے لیے آپ کا ذکر بلند کر دیا۔",
+                    listOf(
+                        QuranWord("وَرَفَعْنَا", "And We raised high", "اور ہم نے بلند کر دیا", "Wa rafa'na"),
+                        QuranWord("لَكَ", "for you", "آپ کے لیے", "laka"),
+                        QuranWord("ذِكْرَكَ", "your remembrance", "آپ کا ذکر", "dhikraka")
+                    )
+                ),
+                Ayah(
+                    5,
+                    "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا",
+                    "For indeed, with hardship [will be] ease.",
+                    "پس یقیناً مشکل کے ساتھ آسانی ہے،",
+                    listOf(
+                        QuranWord("فَإِنَّ", "So indeed", "پس یقیناً", "Fa-inna"),
+                        QuranWord("مَعَ", "with", "ساتھ", "ma'a"),
+                        QuranWord("الْعُسْرِ", "hardship", "تنگی / مشکل", "al-'usri"),
+                        QuranWord("يُسْرًا", "ease", "آسانی", "yusran")
+                    )
+                ),
+                Ayah(
+                    6,
+                    "إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+                    "Indeed, with hardship [will be] ease.",
+                    "بیشک تنگی کے ساتھ آسانی ہے۔",
+                    listOf(
+                        QuranWord("إِنَّ", "Indeed", "بیشک", "Inna"),
+                        QuranWord("مَعَ", "with", "ساتھ", "ma'a"),
+                        QuranWord("الْعُسْرِ", "hardship", "تنگی / مشکل", "al-'usri"),
+                        QuranWord("يُسْرًا", "ease", "آسانی", "yusran")
+                    )
+                ),
+                Ayah(
+                    7,
+                    "فَإِذَا فَرَغْتَ فَانصَبْ",
+                    "So when you have finished [your duties], labor or stand up [for worship].",
+                    "پس جب آپ (اپنے فرائض سے) فارغ ہوں تو عبادت میں محنت کریں،",
+                    listOf(
+                        QuranWord("فَإِذَا", "So when", "پس جب", "Fa-itha"),
+                        QuranWord("فَرَغْتَ", "you have finished", "آپ فارغ ہوں", "faraghta"),
+                        QuranWord("فَانصَبْ", "labor / stand up", "محنت کریں / عبادت کے لیے کھڑے ہوں", "fansab")
+                    )
+                ),
+                Ayah(
+                    8,
+                    "وَإِلَىٰ رَبِّكَ فَارْغَب",
+                    "And to your Lord direct [your] longing.",
+                    "اور اپنے رب ہی کی طرف راغب ہو جائیں۔",
+                    listOf(
+                        QuranWord("وَإِلَىٰ", "And to", "اور طرف", "Wa ila"),
+                        QuranWord("رَبِّكَ", "your Lord", "اپنے رب کی", "Rabbika"),
+                        QuranWord("فَارْغَب", "turn your attention / hope", "راغب ہو جائیں / توجہ کریں", "farghab")
+                    )
+                )
+            )
             103 -> listOf(
                 Ayah(
                     1,

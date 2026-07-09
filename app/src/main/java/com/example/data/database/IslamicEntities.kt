@@ -66,3 +66,14 @@ data class IslamicAlarm(
     val soundUri: String = "",
     val timestamp: Long = System.currentTimeMillis()
 )
+
+@Entity(tableName = "cached_ayahs")
+data class CachedAyah(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val surahNumber: Int,
+    val numberInSurah: Int,
+    val textArabic: String,
+    val textEnglish: String,
+    val textUrdu: String,
+    val timestamp: Long = System.currentTimeMillis()
+)

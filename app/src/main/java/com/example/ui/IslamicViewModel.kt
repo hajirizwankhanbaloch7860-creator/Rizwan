@@ -17,6 +17,8 @@ import java.util.Calendar
 
 class IslamicViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val app = application
+
     // --- Database & Repository Setup (Constructor Injection / Service Locator Style) ---
     private val database: IslamicDatabase by lazy {
         Room.databaseBuilder(
@@ -28,6 +30,51 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
 
     private val repository: IslamicRepository by lazy {
         IslamicRepository(database.islamicDao())
+    }
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val currentCount = repository.getCachedAyahsCount()
+                if (currentCount < 6236) {
+                    android.util.Log.d("IslamicViewModel", "Database is empty or incomplete ($currentCount/6236). Pre-populating Quran offline database...")
+                    repository.clearCachedAyahs()
+                    val jsonString = application.assets.open("quran_offline.json").bufferedReader().use { it.readText() }
+                    val jsonObject = org.json.JSONObject(jsonString)
+                    val surahsArray = jsonObject.getJSONArray("surahs")
+                    val entitiesToInsert = mutableListOf<CachedAyah>()
+                    
+                    for (i in 0 until surahsArray.length()) {
+                        val surahObj = surahsArray.getJSONObject(i)
+                        val surahNum = surahObj.getInt("number")
+                        val ayahsArray = surahObj.getJSONArray("ayahs")
+                        
+                        for (j in 0 until ayahsArray.length()) {
+                            val ayahObj = ayahsArray.getJSONObject(j)
+                            entitiesToInsert.add(
+                                CachedAyah(
+                                    surahNumber = surahNum,
+                                    numberInSurah = ayahObj.getInt("numberInSurah"),
+                                    textArabic = ayahObj.getString("textArabic"),
+                                    textEnglish = ayahObj.getString("textEnglish"),
+                                    textUrdu = ayahObj.getString("textUrdu")
+                                )
+                            )
+                        }
+                    }
+                    
+                    // Insert in batches of 1000 to keep it lightweight and transaction-friendly
+                    entitiesToInsert.chunked(1000).forEach { batch ->
+                        repository.insertCachedAyahs(batch)
+                    }
+                    android.util.Log.d("IslamicViewModel", "Successfully pre-populated ${entitiesToInsert.size} Quran offline verses.")
+                } else {
+                    android.util.Log.d("IslamicViewModel", "Quran offline database already fully populated with $currentCount verses.")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("IslamicViewModel", "Error pre-populating Quran offline database", e)
+            }
+        }
     }
 
     // --- Authentication & User Identity State ---
@@ -154,18 +201,42 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
         _isAudioPlaying.value = false
 
         val localAyahs = QuranDataProvider.getAyahsForSurah(surah.number)
-        if (surah.number in listOf(1, 103, 108, 112, 113, 114)) {
-            _ayahList.value = localAyahs
-        } else {
-            // Load local placeholder first (which is beautiful and has 3 verses), then load dynamically
-            _ayahList.value = localAyahs
-            loadSurahDynamically(surah.number)
-        }
+        _ayahList.value = localAyahs
+        loadSurahDynamically(surah.number)
     }
 
     private fun loadSurahDynamically(surahNumber: Int) {
         _isQuranLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
+            // Step 1: Try to load from local Room Database Cache first!
+            try {
+                val cached = repository.getCachedAyahsForSurah(surahNumber)
+                if (cached.isNotEmpty()) {
+                    val mapped = cached.map { c ->
+                        val wordsList = mutableListOf<QuranWord>()
+                        val arabicWords = c.textArabic.split(" ")
+                        for (w in arabicWords) {
+                            if (w.trim().isNotEmpty()) {
+                                wordsList.add(QuranWord(w, "Word", "لفظ", "Word"))
+                            }
+                        }
+                        Ayah(
+                            numberInSurah = c.numberInSurah,
+                            textArabic = c.textArabic,
+                            textEnglish = c.textEnglish,
+                            textUrdu = c.textUrdu,
+                            words = wordsList
+                        )
+                    }
+                    _ayahList.value = mapped
+                    _isQuranLoading.value = false
+                    return@launch
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            // Step 2: If not in cache, fetch from the Al-Quran Cloud API!
             val url = "https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,en.sahih,ur.jalandhry"
             val request = okhttp3.Request.Builder().url(url).build()
             try {
@@ -175,6 +246,18 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
                         if (body != null) {
                             val parsedAyahs = parseAlQuranApiResponse(body)
                             if (parsedAyahs.isNotEmpty()) {
+                                // Save to local Room cache!
+                                val cachedEntities = parsedAyahs.map { a ->
+                                    CachedAyah(
+                                        surahNumber = surahNumber,
+                                        numberInSurah = a.numberInSurah,
+                                        textArabic = a.textArabic,
+                                        textEnglish = a.textEnglish,
+                                        textUrdu = a.textUrdu
+                                    )
+                                }
+                                repository.insertCachedAyahs(cachedEntities)
+                                
                                 _ayahList.value = parsedAyahs
                                 _isQuranLoading.value = false
                                 return@launch
@@ -190,6 +273,18 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
             try {
                 val geminiAyahs = fetchAyahsFromGemini(surahNumber)
                 if (geminiAyahs.isNotEmpty()) {
+                    // Save to local Room cache!
+                    val cachedEntities = geminiAyahs.map { a ->
+                        CachedAyah(
+                            surahNumber = surahNumber,
+                            numberInSurah = a.numberInSurah,
+                            textArabic = a.textArabic,
+                            textEnglish = a.textEnglish,
+                            textUrdu = a.textUrdu
+                        )
+                    }
+                    repository.insertCachedAyahs(cachedEntities)
+
                     _ayahList.value = geminiAyahs
                     _isQuranLoading.value = false
                     return@launch
@@ -218,6 +313,137 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
             _ayahList.value = fallbackList
             _isQuranLoading.value = false
         }
+    }
+
+    private fun getAyahsFromAsset(surahNumber: Int): List<Ayah> {
+        try {
+            val jsonString = app.assets.open("quran_offline.json").bufferedReader().use { it.readText() }
+            val jsonObject = org.json.JSONObject(jsonString)
+            val surahsArray = jsonObject.getJSONArray("surahs")
+            for (i in 0 until surahsArray.length()) {
+                val surahObj = surahsArray.getJSONObject(i)
+                val surahNum = surahObj.getInt("number")
+                if (surahNum == surahNumber) {
+                    val ayahsArray = surahObj.getJSONArray("ayahs")
+                    val result = mutableListOf<Ayah>()
+                    for (j in 0 until ayahsArray.length()) {
+                        val ayahObj = ayahsArray.getJSONObject(j)
+                        val textArabic = ayahObj.getString("textArabic")
+                        val wordsList = mutableListOf<QuranWord>()
+                        val arabicWords = textArabic.split(" ")
+                        for (w in arabicWords) {
+                            if (w.trim().isNotEmpty()) {
+                                wordsList.add(QuranWord(w, "Word", "لفظ", "Word"))
+                            }
+                        }
+                        result.add(
+                            Ayah(
+                                numberInSurah = ayahObj.getInt("numberInSurah"),
+                                textArabic = textArabic,
+                                textEnglish = ayahObj.getString("textEnglish"),
+                                textUrdu = ayahObj.getString("textUrdu"),
+                                words = wordsList
+                            )
+                        )
+                    }
+                    return result
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("IslamicViewModel", "Error reading fallback from asset", e)
+        }
+        return emptyList()
+    }
+
+    suspend fun getAyahsForSurahWithCache(surahNumber: Int): List<Ayah> {
+        // 1. Try local Room cache
+        try {
+            val cached = repository.getCachedAyahsForSurah(surahNumber)
+            if (cached.isNotEmpty()) {
+                return cached.map { c ->
+                    val wordsList = mutableListOf<QuranWord>()
+                    val arabicWords = c.textArabic.split(" ")
+                    for (w in arabicWords) {
+                        if (w.trim().isNotEmpty()) {
+                            wordsList.add(QuranWord(w, "Word", "لفظ", "Word"))
+                        }
+                    }
+                    Ayah(
+                        numberInSurah = c.numberInSurah,
+                        textArabic = c.textArabic,
+                        textEnglish = c.textEnglish,
+                        textUrdu = c.textUrdu,
+                        words = wordsList
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        
+        // 2. Try the embedded offline JSON asset directly as a bulletproof instant fallback!
+        val assetAyahs = getAyahsFromAsset(surahNumber)
+        if (assetAyahs.isNotEmpty()) {
+            return assetAyahs
+        }
+
+        // 3. Try hardcoded provider (like for 1, 93, 94, 103, 108, 112, 113, 114)
+        val providerAyahs = QuranDataProvider.getAyahsForSurah(surahNumber)
+        if (surahNumber in listOf(1, 93, 94, 103, 108, 112, 113, 114)) {
+            return providerAyahs
+        }
+        
+        // 3. Otherwise try fetching online to cache it!
+        val url = "https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,en.sahih,ur.jalandhry"
+        val request = okhttp3.Request.Builder().url(url).build()
+        try {
+            httpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    if (body != null) {
+                        val parsedAyahs = parseAlQuranApiResponse(body)
+                        if (parsedAyahs.isNotEmpty()) {
+                            // Save to local Room cache!
+                            val cachedEntities = parsedAyahs.map { a ->
+                                CachedAyah(
+                                    surahNumber = surahNumber,
+                                    numberInSurah = a.numberInSurah,
+                                    textArabic = a.textArabic,
+                                    textEnglish = a.textEnglish,
+                                    textUrdu = a.textUrdu
+                                )
+                            }
+                            repository.insertCachedAyahs(cachedEntities)
+                            return parsedAyahs
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // Fallback: Gemini
+        try {
+            val geminiAyahs = fetchAyahsFromGemini(surahNumber)
+            if (geminiAyahs.isNotEmpty()) {
+                val cachedEntities = geminiAyahs.map { a ->
+                    CachedAyah(
+                        surahNumber = surahNumber,
+                        numberInSurah = a.numberInSurah,
+                        textArabic = a.textArabic,
+                        textEnglish = a.textEnglish,
+                        textUrdu = a.textUrdu
+                    )
+                }
+                repository.insertCachedAyahs(cachedEntities)
+                return geminiAyahs
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return providerAyahs
     }
 
     private fun parseAlQuranApiResponse(jsonStr: String): List<Ayah> {
@@ -435,28 +661,32 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
                     }
                 }
                 setOnCompletionListener {
-                    if (isPlayingBismillahPrepend) {
-                        isPlayingBismillahPrepend = false
-                        bismillahPlayedForSurah = surahNumber
-                        playAyahAudio(surahNumber, 1)
-                    } else {
-                        val currentOption = _translationRecitationOption.value
-                        if (currentOption != "None") {
-                            val currentAyah = _ayahList.value.firstOrNull { it.numberInSurah == ayahNumber }
-                            if (currentAyah != null) {
-                                val textToSpeak = if (currentOption == "Urdu Translation") {
-                                    currentAyah.textUrdu
+                    viewModelScope.launch {
+                        if (isPlayingBismillahPrepend) {
+                            kotlinx.coroutines.delay(600)
+                            isPlayingBismillahPrepend = false
+                            bismillahPlayedForSurah = surahNumber
+                            playAyahAudio(surahNumber, 1)
+                        } else {
+                            kotlinx.coroutines.delay(3000)
+                            val currentOption = _translationRecitationOption.value
+                            if (currentOption != "None") {
+                                val currentAyah = _ayahList.value.firstOrNull { it.numberInSurah == ayahNumber }
+                                if (currentAyah != null) {
+                                    val textToSpeak = if (currentOption == "Urdu Translation") {
+                                        currentAyah.textUrdu
+                                    } else {
+                                        currentAyah.textEnglish
+                                    }
+                                    speakTranslation(textToSpeak) {
+                                        playNextAyahAuto()
+                                    }
                                 } else {
-                                    currentAyah.textEnglish
-                                }
-                                speakTranslation(textToSpeak) {
                                     playNextAyahAuto()
                                 }
                             } else {
                                 playNextAyahAuto()
                             }
-                        } else {
-                            playNextAyahAuto()
                         }
                     }
                 }
@@ -550,6 +780,8 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
             textToSpeech?.stop()
             ttsOnDoneCallback = null
             mediaPlayer?.let {
+                it.setOnCompletionListener(null)
+                it.setOnErrorListener(null)
                 if (it.isPlaying) {
                     it.pause()
                 }
@@ -565,6 +797,8 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
             ttsOnDoneCallback = null
             _currentPlayingHadithNumber.value = null
             mediaPlayer?.let {
+                it.setOnCompletionListener(null)
+                it.setOnErrorListener(null)
                 it.release()
             }
             mediaPlayer = null
@@ -669,6 +903,53 @@ class IslamicViewModel(application: Application) : AndroidViewModel(application)
             textToSpeech?.stop()
             ttsOnDoneCallback = null
             _currentPlayingHadithNumber.value = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    // General purpose Text-To-Speech for educational screens
+    private val _isTtsSpeaking = MutableStateFlow(false)
+    val isTtsSpeaking = _isTtsSpeaking.asStateFlow()
+
+    fun speakText(text: String, languageCode: String = "en", pitch: Float = 1.0f, speechRate: Float = 1.0f) {
+        val tts = textToSpeech ?: return
+        try {
+            _isTtsSpeaking.value = true
+            tts.setPitch(pitch)
+            tts.setSpeechRate(speechRate)
+            tts.language = java.util.Locale(languageCode)
+            val params = android.os.Bundle().apply {
+                putString(android.speech.tts.TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "general_tts")
+            }
+            tts.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) {
+                    _isTtsSpeaking.value = true
+                }
+                override fun onDone(utteranceId: String?) {
+                    _isTtsSpeaking.value = false
+                    // Reset pitch and speech rate to default
+                    tts.setPitch(1.0f)
+                    tts.setSpeechRate(1.0f)
+                }
+                override fun onError(utteranceId: String?) {
+                    _isTtsSpeaking.value = false
+                    // Reset pitch and speech rate to default
+                    tts.setPitch(1.0f)
+                    tts.setSpeechRate(1.0f)
+                }
+            })
+            tts.speak(text, android.speech.tts.TextToSpeech.QUEUE_FLUSH, params, "general_tts")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            _isTtsSpeaking.value = false
+        }
+    }
+
+    fun stopSpeaking() {
+        try {
+            textToSpeech?.stop()
+            _isTtsSpeaking.value = false
         } catch (e: Exception) {
             e.printStackTrace()
         }

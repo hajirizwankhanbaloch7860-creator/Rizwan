@@ -10,9 +10,10 @@ import androidx.room.RoomDatabase
         QuranHighlight::class,
         TasbeehItem::class,
         HadithBookmark::class,
-        IslamicAlarm::class
+        IslamicAlarm::class,
+        CachedAyah::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class IslamicDatabase : RoomDatabase() {

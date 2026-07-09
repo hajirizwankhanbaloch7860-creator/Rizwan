@@ -90,4 +90,25 @@ class IslamicRepository(private val islamicDao: IslamicDao) {
     suspend fun deleteIslamicAlarm(id: Int) {
         islamicDao.deleteIslamicAlarm(id)
     }
+
+    // --- Cached Ayahs (Full Quran Offline Storage) ---
+    suspend fun getCachedAyahsCount(): Int {
+        return islamicDao.getCachedAyahsCount()
+    }
+
+    suspend fun getCachedAyahsForSurah(surahNumber: Int): List<CachedAyah> {
+        return islamicDao.getCachedAyahsForSurah(surahNumber)
+    }
+
+    suspend fun insertCachedAyahs(ayahs: List<CachedAyah>) {
+        islamicDao.insertCachedAyahs(ayahs)
+    }
+
+    suspend fun clearCachedAyahs() {
+        islamicDao.clearCachedAyahs()
+    }
+
+    suspend fun deleteCachedAyahsForSurah(surahNumber: Int) {
+        islamicDao.deleteCachedAyahsForSurah(surahNumber)
+    }
 }
