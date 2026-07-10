@@ -2,18 +2,19 @@ package com.example.data.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.example.data.model.*
 
 @Database(
     entities = [
+        CachedAyah::class,
         QuranBookmark::class,
         QuranNote::class,
         QuranHighlight::class,
-        TasbeehItem::class,
         HadithBookmark::class,
         IslamicAlarm::class,
-        CachedAyah::class
+        TasbeehHistory::class
     ],
-    version = 2,
+    version = 1,
     exportSchema = false
 )
 abstract class IslamicDatabase : RoomDatabase() {
