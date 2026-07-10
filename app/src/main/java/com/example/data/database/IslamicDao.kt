@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface IslamicDao {
+    // Cached Ayahs
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCachedAyahs(ayahs: List<CachedAyah>)
 
@@ -21,6 +22,7 @@ interface IslamicDao {
     @Query("DELETE FROM cached_ayahs")
     suspend fun clearCachedAyahs()
 
+    // Quran Bookmarks
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertQuranBookmark(bookmark: QuranBookmark)
 
@@ -33,6 +35,7 @@ interface IslamicDao {
     @Query("DELETE FROM quran_bookmarks WHERE id = :id")
     suspend fun deleteQuranBookmark(id: Int)
 
+    // Quran Notes
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertQuranNote(note: QuranNote)
 
@@ -42,6 +45,7 @@ interface IslamicDao {
     @Query("DELETE FROM quran_notes WHERE id = :id")
     suspend fun deleteQuranNote(id: Int)
 
+    // Quran Highlights
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertQuranHighlight(highlight: QuranHighlight)
 
@@ -54,6 +58,7 @@ interface IslamicDao {
     @Query("DELETE FROM quran_highlights WHERE id = :id")
     suspend fun deleteQuranHighlight(id: Int)
 
+    // Hadith Bookmarks
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHadithBookmark(bookmark: HadithBookmark)
 
@@ -63,6 +68,7 @@ interface IslamicDao {
     @Query("DELETE FROM hadith_bookmarks WHERE id = :id")
     suspend fun deleteHadithBookmark(id: Int)
 
+    // Islamic Alarms
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertIslamicAlarm(alarm: IslamicAlarm)
 
@@ -75,6 +81,7 @@ interface IslamicDao {
     @Query("DELETE FROM islamic_alarms WHERE id = :id")
     suspend fun deleteIslamicAlarm(id: Int)
 
+    // Tasbeeh History
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTasbeehHistory(history: TasbeehHistory)
 
