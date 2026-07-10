@@ -1,114 +1,72 @@
 package com.example.data.repository
 
-import com.example.data.database.*
+import com.example.data.database.IslamicDao
+import com.example.data.model.*
 import kotlinx.coroutines.flow.Flow
 
-class IslamicRepository(private val islamicDao: IslamicDao) {
+class IslamicRepository(private val dao: IslamicDao) {
 
-    // --- Quran Bookmarks ---
-    val allQuranBookmarks: Flow<List<QuranBookmark>> = islamicDao.getAllQuranBookmarks()
+    // Cached Ayahs
+    suspend fun insertCachedAyahs(ayahs: List<CachedAyah>) = dao.insertCachedAyahs(ayahs)
 
-    suspend fun insertQuranBookmark(bookmark: QuranBookmark) {
-        islamicDao.insertQuranBookmark(bookmark)
-    }
+    suspend fun getCachedAyahsForSurah(surahNumber: Int): List<CachedAyah> =
+        dao.getCachedAyahsForSurah(surahNumber)
 
-    suspend fun deleteQuranBookmarkByVerse(surah: Int, ayah: Int) {
-        islamicDao.deleteQuranBookmarkByVerse(surah, ayah)
-    }
+    suspend fun getCachedAyahsCount(): Int = dao.getCachedAyahsCount()
 
-    suspend fun deleteQuranBookmarkById(id: Int) {
-        islamicDao.deleteQuranBookmarkById(id)
-    }
+    suspend fun clearCachedAyahs() = dao.clearCachedAyahs()
 
-    fun isQuranBookmarked(surah: Int, ayah: Int): Flow<Boolean> {
-        return islamicDao.isQuranBookmarkedFlow(surah, ayah)
-    }
+    // Quran Bookmarks
+    suspend fun insertQuranBookmark(bookmark: QuranBookmark) = dao.insertQuranBookmark(bookmark)
 
-    // --- Quran Notes ---
-    val allQuranNotes: Flow<List<QuranNote>> = islamicDao.getAllQuranNotes()
+    val allQuranBookmarks: Flow<List<QuranBookmark>> = dao.getAllQuranBookmarks()
 
-    suspend fun getNoteForVerse(surah: Int, ayah: Int): QuranNote? {
-        return islamicDao.getNoteForVerse(surah, ayah)
-    }
+    suspend fun deleteQuranBookmarkByVerse(surahNumber: Int, ayahNumber: Int) =
+        dao.deleteQuranBookmarkByVerse(surahNumber, ayahNumber)
 
-    suspend fun insertQuranNote(note: QuranNote) {
-        islamicDao.insertQuranNote(note)
-    }
+    suspend fun deleteQuranBookmark(id: Int) = dao.deleteQuranBookmark(id)
 
-    suspend fun deleteQuranNoteByVerse(surah: Int, ayah: Int) {
-        islamicDao.deleteQuranNoteByVerse(surah, ayah)
-    }
+    // Quran Notes
+    suspend fun insertQuranNote(note: QuranNote) = dao.insertQuranNote(note)
 
-    // --- Quran Highlights ---
-    val allQuranHighlights: Flow<List<QuranHighlight>> = islamicDao.getAllQuranHighlights()
+    val allQuranNotes: Flow<List<QuranNote>> = dao.getAllQuranNotes()
 
-    suspend fun insertQuranHighlight(highlight: QuranHighlight) {
-        islamicDao.insertQuranHighlight(highlight)
-    }
+    suspend fun deleteQuranNote(id: Int) = dao.deleteQuranNote(id)
 
-    suspend fun deleteQuranHighlightByVerse(surah: Int, ayah: Int) {
-        islamicDao.deleteQuranHighlightByVerse(surah, ayah)
-    }
+    // Quran Highlights
+    suspend fun insertQuranHighlight(highlight: QuranHighlight) =
+        dao.insertQuranHighlight(highlight)
 
-    // --- Tasbeeh Items ---
-    val allTasbeehHistory: Flow<List<TasbeehItem>> = islamicDao.getAllTasbeehHistory()
+    fun getQuranHighlightsForSurah(surahNumber: Int): Flow<List<QuranHighlight>> =
+        dao.getQuranHighlightsForSurah(surahNumber)
 
-    suspend fun insertTasbeehItem(item: TasbeehItem) {
-        islamicDao.insertTasbeehItem(item)
-    }
+    val allQuranHighlights: Flow<List<QuranHighlight>> = dao.getAllQuranHighlights()
 
-    suspend fun deleteTasbeehItem(id: Int) {
-        islamicDao.deleteTasbeehItem(id)
-    }
+    suspend fun deleteQuranHighlight(id: Int) = dao.deleteQuranHighlight(id)
 
-    suspend fun clearAllTasbeehHistory() {
-        islamicDao.clearAllTasbeehHistory()
-    }
+    // Hadith Bookmarks
+    suspend fun insertHadithBookmark(bookmark: HadithBookmark) =
+        dao.insertHadithBookmark(bookmark)
 
-    // --- Hadith Bookmarks ---
-    val allHadithBookmarks: Flow<List<HadithBookmark>> = islamicDao.getAllHadithBookmarks()
+    val allHadithBookmarks: Flow<List<HadithBookmark>> = dao.getAllHadithBookmarks()
 
-    suspend fun insertHadithBookmark(bookmark: HadithBookmark) {
-        islamicDao.insertHadithBookmark(bookmark)
-    }
+    suspend fun deleteHadithBookmark(id: Int) = dao.deleteHadithBookmark(id)
 
-    suspend fun deleteHadithBookmark(bookName: String, hadithNumber: String) {
-        islamicDao.deleteHadithBookmark(bookName, hadithNumber)
-    }
+    // Islamic Alarms
+    suspend fun insertIslamicAlarm(alarm: IslamicAlarm) = dao.insertIslamicAlarm(alarm)
 
-    fun isHadithBookmarked(bookName: String, hadithNumber: String): Flow<Boolean> {
-        return islamicDao.isHadithBookmarkedFlow(bookName, hadithNumber)
-    }
+    suspend fun getAlarmForPrayer(prayerName: String): IslamicAlarm? =
+        dao.getAlarmForPrayer(prayerName)
 
-    // --- Islamic Alarms ---
-    val allIslamicAlarms: Flow<List<IslamicAlarm>> = islamicDao.getAllIslamicAlarms()
+    val allIslamicAlarms: Flow<List<IslamicAlarm>> = dao.getAllIslamicAlarms()
 
-    suspend fun insertIslamicAlarm(alarm: IslamicAlarm) {
-        islamicDao.insertIslamicAlarm(alarm)
-    }
+    suspend fun deleteIslamicAlarm(id: Int) = dao.deleteIslamicAlarm(id)
 
-    suspend fun deleteIslamicAlarm(id: Int) {
-        islamicDao.deleteIslamicAlarm(id)
-    }
+    // Tasbeeh History
+    suspend fun insertTasbeehHistory(history: TasbeehHistory) =
+        dao.insertTasbeehHistory(history)
 
-    // --- Cached Ayahs (Full Quran Offline Storage) ---
-    suspend fun getCachedAyahsCount(): Int {
-        return islamicDao.getCachedAyahsCount()
-    }
+    val allTasbeehHistory: Flow<List<TasbeehHistory>> = dao.getAllTasbeehHistory()
 
-    suspend fun getCachedAyahsForSurah(surahNumber: Int): List<CachedAyah> {
-        return islamicDao.getCachedAyahsForSurah(surahNumber)
-    }
-
-    suspend fun insertCachedAyahs(ayahs: List<CachedAyah>) {
-        islamicDao.insertCachedAyahs(ayahs)
-    }
-
-    suspend fun clearCachedAyahs() {
-        islamicDao.clearCachedAyahs()
-    }
-
-    suspend fun deleteCachedAyahsForSurah(surahNumber: Int) {
-        islamicDao.deleteCachedAyahsForSurah(surahNumber)
-    }
+    suspend fun deleteTasbeehHistory(id: Int) = dao.deleteTasbeehHistory(id)
 }
